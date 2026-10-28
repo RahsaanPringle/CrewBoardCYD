@@ -1,0 +1,16 @@
+{
+  "wifi": {
+    "ssid": "Fivenet",
+    "password": "jump70lake"
+  },
+  "admin": {
+    "username": "cyd",
+    "password": "upload"
+  },
+  "users": [
+    {
+      "username": "Raalnan5",
+      "password": "Rhyt67"
+    }
+  ]
+}
