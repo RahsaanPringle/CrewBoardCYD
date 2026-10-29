@@ -1,9 +1,19 @@
 [
   {
     "id": "msg-welcome",
+    "author": "cyd",
     "title": "Welcome to CrewBoard",
-    "body": "This is a sample announcement. Sign in as the owner to replace it.",
-    "postedAt": "2026-10-28",
+    "body": "This is a sample post. Anyone signed in can reply, and the owner can remove it.",
+    "postedAt": "2026-10-28T08:00",
+    "expiresAt": ""
+  },
+  {
+    "id": "msg-welcome-reply",
+    "parentId": "msg-welcome",
+    "author": "cyd",
+    "title": "",
+    "body": "Replies appear underneath the post they answer.",
+    "postedAt": "2026-10-28T08:05",
     "expiresAt": ""
   }
 ]

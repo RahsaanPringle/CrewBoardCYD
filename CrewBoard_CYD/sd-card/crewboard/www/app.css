@@ -15,6 +15,28 @@ body { background: #f4f6f5; color: #172421; min-height: 100vh; }
 .location-map { position: relative; min-height: 360px; overflow: hidden; border-radius: .75rem; border: 1px solid #bed0ca; background-color: #e9f0ec; background-image: linear-gradient(rgba(24,76,70,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(24,76,70,.08) 1px,transparent 1px); background-size: 32px 32px; }
 .map-point { position: absolute; transform: translate(-50%,-50%); display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 3px solid #fff; border-radius: 50%; background: var(--crew-gold); color: #1f2a27; font-weight: 700; box-shadow: 0 .2rem .6rem rgba(0,0,0,.25); cursor: default; }
 .map-label { position: absolute; transform: translate(-50%,1.5rem); max-width: 9rem; padding: .1rem .35rem; border-radius: .25rem; background: rgba(255,255,255,.9); font-size: .75rem; text-align: center; }
+.location-map { height: 360px; }
+.map-tile { position: absolute; width: 256px; height: 256px; max-width: none; user-select: none; pointer-events: none; }
+.map-point, .map-label { z-index: 2; }
+.map-empty { padding: 1rem; }
+.map-attribution { position: absolute; right: 0; bottom: 0; z-index: 3; padding: .1rem .4rem; background: rgba(255,255,255,.85); font-size: .7rem; border-top-left-radius: .25rem; }
+.message-author { font-weight: 600; color: var(--crew-green); }
+.message-actions .btn-link { padding: 0 .5rem 0 0; font-size: .85rem; text-decoration: none; }
+.message-replies { margin-top: .75rem; }
+.message-reply { margin-left: 1rem; padding: .5rem 0 .25rem .9rem; border-left: 3px solid var(--crew-mint); }
+.message-flat { margin-left: 0; }
+.message-quote { padding: .5rem .75rem; border-left: 3px solid #bdc9c5; color: #64716d; background: #f4f6f5; white-space: pre-wrap; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .3rem; }
+.calendar-weekday { text-align: center; font-size: .8rem; font-weight: 600; color: #64716d; }
+.calendar-day { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: .15rem; min-height: 5.5rem; padding: .3rem; border: 1px solid #dce3e0; border-radius: .5rem; background: #fff; text-align: left; overflow: hidden; color: inherit; }
+button.calendar-day:hover { border-color: var(--crew-green); }
+.calendar-blank { background: transparent; border-color: transparent; }
+.calendar-day.is-today .calendar-number { background: var(--crew-gold); border-radius: 50%; }
+.calendar-day.is-selected { outline: 2px solid var(--crew-green); outline-offset: -2px; }
+.calendar-number { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; font-weight: 600; font-size: .85rem; }
+.calendar-count { display: none; position: absolute; right: .25rem; top: .25rem; min-width: 1.2rem; padding: 0 .3rem; border-radius: 1rem; background: var(--crew-green); color: #fff; font-size: .7rem; text-align: center; }
+.calendar-job { display: block; padding: .05rem .3rem; border-radius: .25rem; background: var(--crew-mint); color: var(--crew-green); font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendar-more { font-size: .7rem; color: #64716d; }
 .empty-state { padding: 2rem; text-align: center; color: #64716d; background: #fff; border: 1px dashed #bdc9c5; border-radius: .75rem; }
 textarea { min-height: 7rem; }
-@media (max-width: 575.98px) { .app-tabs { display: grid; grid-template-columns: 1fr 1fr; } .location-map { min-height: 300px; } }
+@media (max-width: 575.98px) { .app-tabs { display: grid; grid-template-columns: 1fr 1fr; } .location-map { height: 300px; } .calendar-day { min-height: 3.25rem; } .calendar-jobs { display: none; } .calendar-count { display: block; } .message-reply { margin-left: .4rem; padding-left: .6rem; } }

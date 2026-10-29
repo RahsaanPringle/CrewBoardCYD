@@ -14,7 +14,9 @@ constexpr uint8_t backlightPin = 21;
 constexpr uint8_t maxUserCount = 12;
 constexpr uint8_t statusLineCount = 7;
 constexpr size_t transferBufferSize = 1024;
-constexpr size_t maxApiBodySize = 16384;
+constexpr size_t maxApiBodySize = 24576;
+constexpr size_t jsonDocumentCapacity = maxApiBodySize * 2;
+constexpr size_t maxSmallBodySize = 2048;
 constexpr size_t maxDavUploadSize = 8UL * 1024UL * 1024UL;
 constexpr size_t maxRequestLineLength = 512;
 constexpr size_t maxHeaderLineLength = 768;
@@ -24,6 +26,8 @@ constexpr char primaryConfigPath[] = "/config.json";
 constexpr char webRoot[] = "/crewboard/www";
 constexpr char dataRoot[] = "/crewboard/data";
 constexpr char davStorageRoot[] = "/crewboard/shared";
+constexpr char ownerRole[] = "Owner";
+const char* const rosterRoles[] = { ownerRole, "Crew Lead", "Crew Member", "Equipment Operator", "Trainee" };
 
 struct UserCredential {
   String employeeId;
@@ -306,8 +310,17 @@ size_t collectionLimit(const String& collection) {
   if (collection == "roster") return 50;
   if (collection == "locations") return 100;
   if (collection == "schedule") return 250;
-  if (collection == "messages") return 100;
+  if (collection == "messages") return 200;
   return 0;
+}
+
+bool validRole(JsonVariantConst value) {
+  if (value.isNull()) return true;
+  if (!value.is<const char*>()) return false;
+  const char* role = value.as<const char*>();
+  if (!role[0]) return true;
+  for (const char* allowed : rosterRoles) if (strcmp(role, allowed) == 0) return true;
+  return false;
 }
 
 bool validText(JsonVariantConst value, size_t maximum, bool required = true) {
@@ -337,18 +350,25 @@ bool validateCollection(const String& collection, JsonDocument& document, String
           !validText(record["birthday"], 10, false) || !validText(record["emergencyContactName"], 80, false) ||
           !validText(record["emergencyContactPhone"], 30, false) || !validText(record["notes"], 300, false) ||
           !record["active"].is<bool>()) { error = "A roster record is invalid."; return false; }
+      if (!validRole(record["role"])) { error = "Choose a role from the defined role list."; return false; }
     } else if (collection == "locations") {
       if (!validText(record["name"], 80) || !validText(record["address"], 120) || !validText(record["city"], 60) || !validText(record["region"], 30, false) || !validText(record["postalCode"], 16, false)) { error = "A location record is invalid."; return false; }
-      if (!record["latitude"].isNull() && !record["latitude"].is<float>()) { error = "Latitude must be a number or null."; return false; }
-      if (!record["longitude"].isNull() && !record["longitude"].is<float>()) { error = "Longitude must be a number or null."; return false; }
-      const float latitude = record["latitude"] | 0.0f;
-      const float longitude = record["longitude"] | 0.0f;
+      if (!record["latitude"].is<float>() || !record["longitude"].is<float>()) {
+        error = String("Latitude and longitude are required for ") + (record["name"] | "a location") + ".";
+        return false;
+      }
+      const float latitude = record["latitude"].as<float>();
+      const float longitude = record["longitude"].as<float>();
       if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) { error = "Location coordinates are out of range."; return false; }
     } else if (collection == "schedule") {
       if (!validText(record["title"], 80) || !validText(record["date"], 10) || !validText(record["startTime"], 5) || !validText(record["endTime"], 5, false) || !validText(record["locationId"], 64) || !validText(record["notes"], 500, false) || !record["crewIds"].is<JsonArray>()) { error = "A schedule record is invalid."; return false; }
       if (record["crewIds"].as<JsonArray>().size() > maxUserCount) { error = "A job has too many crew assignments."; return false; }
     } else if (collection == "messages") {
-      if (!validText(record["title"], 80) || !validText(record["body"], 1000) || !validText(record["postedAt"], 10) || !validText(record["expiresAt"], 10, false)) { error = "A message record is invalid."; return false; }
+      const bool isReply = record["parentId"].is<const char*>() && record["parentId"].as<const char*>()[0];
+      if (!validText(record["title"], 80, !isReply) || !validText(record["body"], 1000) || !validText(record["postedAt"], 25) ||
+          !validText(record["expiresAt"], 10, false) || !validText(record["author"], 40, false) || !validText(record["parentId"], 64, false)) {
+        error = "A message record is invalid."; return false;
+      }
     }
   }
   return true;
@@ -405,7 +425,7 @@ void handleApiPut(WiFiClient& client, const HttpRequest& request, const String& 
   if (!bodyRead) { SD.remove(temporaryPath); sendJsonError(client, 408, "Request Timeout", "The request body was interrupted."); return; }
 
   temporary = SD.open(temporaryPath, FILE_READ);
-  DynamicJsonDocument document(maxApiBodySize + 4096);
+  DynamicJsonDocument document(jsonDocumentCapacity);
   const DeserializationError jsonError = deserializeJson(document, temporary);
   temporary.close();
   String validationError;
@@ -539,15 +559,189 @@ void handleAccountPut(WiFiClient& client, const HttpRequest& request) {
   sendAccountsJson(client);
 }
 
+String employeeIdFor(const String& username) {
+  for (uint8_t i = 0; i < userCount; ++i) if (users[i].username == username) return users[i].employeeId;
+  return "";
+}
+
+bool loadCollection(const String& collection, JsonDocument& document) {
+  File file = SD.open(collectionPath(collection), FILE_READ);
+  if (!file || file.isDirectory()) {
+    if (file) file.close();
+    document.to<JsonArray>();
+    return true;
+  }
+  const DeserializationError error = deserializeJson(document, file);
+  file.close();
+  return !error && document.is<JsonArray>();
+}
+
+bool saveCollection(const String& collection, JsonDocument& document, String& error) {
+  if (!validateCollection(collection, document, error)) return false;
+  if (measureJson(document) > maxApiBodySize) { error = "This collection is full. Ask the owner to remove older records."; return false; }
+  const String finalPath = collectionPath(collection);
+  const String temporaryPath = finalPath + ".tmp";
+  if (SD.exists(temporaryPath)) SD.remove(temporaryPath);
+  File temporary = SD.open(temporaryPath, FILE_WRITE);
+  if (!temporary) { error = "Could not create a temporary data file."; return false; }
+  const size_t written = serializeJson(document, temporary);
+  temporary.flush();
+  temporary.close();
+  if (written == 0 || !installTemporaryFile(temporaryPath, finalPath)) {
+    SD.remove(temporaryPath);
+    error = "Could not safely replace the data file.";
+    return false;
+  }
+  return true;
+}
+
+// Shared checks for small JSON write requests that any signed-in user may send.
+bool readSmallJsonRequest(WiFiClient& client, const HttpRequest& request, JsonDocument& document) {
+  if (request.crewBoardHeader != "1") { sendJsonError(client, 403, "Forbidden", "Missing same-origin request marker."); return false; }
+  if (!request.transferEncoding.isEmpty() || !request.hasContentLength || request.contentLength == 0 || request.contentLength > maxSmallBodySize) {
+    sendJsonError(client, 413, "Content Too Large", "The request is empty or too large."); return false;
+  }
+  String lowerType = request.contentType; lowerType.toLowerCase();
+  if (!lowerType.startsWith("application/json")) { sendJsonError(client, 415, "Unsupported Media Type", "Use application/json."); return false; }
+  String body;
+  if (!readBodyToString(client, body, request.contentLength)) { sendJsonError(client, 408, "Request Timeout", "The request was interrupted."); return false; }
+  if (deserializeJson(document, body) || !document.is<JsonObject>()) { sendJsonError(client, 422, "Unprocessable Content", "The request is not valid JSON."); return false; }
+  return true;
+}
+
+void handleProfilePut(WiFiClient& client, const HttpRequest& request) {
+  DynamicJsonDocument requestDocument(maxSmallBodySize + 1024);
+  if (!readSmallJsonRequest(client, request, requestDocument)) return;
+  const String employeeId = employeeIdFor(request.authenticatedUsername);
+  if (employeeId.isEmpty()) { sendJsonError(client, 403, "Forbidden", "This login is not linked to a roster record."); return; }
+
+  DynamicJsonDocument roster(jsonDocumentCapacity);
+  if (!loadCollection("roster", roster)) { sendJsonError(client, 500, "Internal Server Error", "The roster file is invalid."); return; }
+  JsonObject employee;
+  for (JsonObject record : roster.as<JsonArray>()) {
+    if (employeeId == (record["id"] | "")) { employee = record; break; }
+  }
+  if (employee.isNull()) { sendJsonError(client, 404, "Not Found", "Your roster record was not found."); return; }
+  if (strcmp(employee["role"] | "", ownerRole) == 0) { sendJsonError(client, 403, "Forbidden", "Crew members cannot modify the owner record."); return; }
+
+  static const char* const editableFields[] = { "phone", "email", "birthday", "emergencyContactName", "emergencyContactPhone" };
+  for (const char* fieldName : editableFields) {
+    JsonVariantConst value = requestDocument[fieldName];
+    if (value.isNull()) continue;
+    if (!value.is<const char*>()) { sendJsonError(client, 422, "Unprocessable Content", "Profile fields must be text."); return; }
+    employee[fieldName] = String(value.as<const char*>());
+  }
+  String error;
+  if (!saveCollection("roster", roster, error)) { sendJsonError(client, 422, "Unprocessable Content", error); return; }
+  logEvent("Profile updated by " + request.authenticatedUsername);
+  sendText(client, 200, "OK", "application/json; charset=utf-8", "{\"ok\":true}", "Cache-Control: no-store\r\n");
+}
+
+void handleMessagePost(WiFiClient& client, const HttpRequest& request) {
+  DynamicJsonDocument requestDocument(maxSmallBodySize + 1024);
+  if (!readSmallJsonRequest(client, request, requestDocument)) return;
+  const String parentId = requestDocument["parentId"] | "";
+  const String title = requestDocument["title"] | "";
+  const String body = requestDocument["body"] | "";
+  const String postedAt = requestDocument["postedAt"] | "";
+  const String expiresAt = request.isAdmin ? String(requestDocument["expiresAt"] | "") : String("");
+  if (body.isEmpty() || postedAt.length() < 10 || (parentId.isEmpty() && title.isEmpty())) {
+    sendJsonError(client, 422, "Unprocessable Content", "A message needs text, and new posts need a title."); return;
+  }
+
+  DynamicJsonDocument messages(jsonDocumentCapacity);
+  if (!loadCollection("messages", messages)) { sendJsonError(client, 500, "Internal Server Error", "The message file is invalid."); return; }
+  JsonArray array = messages.as<JsonArray>();
+  if (array.size() >= collectionLimit("messages")) { sendJsonError(client, 409, "Conflict", "The message board is full. Ask the owner to remove older posts."); return; }
+
+  bool parentFound = parentId.isEmpty();
+  String id;
+  for (uint8_t attempt = 0; attempt < 5 && id.isEmpty(); ++attempt) {
+    id = "msg-" + String(millis(), HEX) + "-" + String(esp_random() & 0xffffff, HEX);
+    for (JsonObject record : array) if (id == (record["id"] | "")) { id = ""; break; }
+  }
+  for (JsonObject record : array) if (!parentFound && parentId == (record["id"] | "")) parentFound = true;
+  if (!parentFound) { sendJsonError(client, 404, "Not Found", "The message being replied to no longer exists."); return; }
+  if (id.isEmpty()) { sendJsonError(client, 500, "Internal Server Error", "Could not create a message ID."); return; }
+
+  JsonObject record = array.add<JsonObject>();
+  record["id"] = id;
+  if (!parentId.isEmpty()) record["parentId"] = parentId;
+  record["author"] = request.authenticatedUsername;
+  record["title"] = title;
+  record["body"] = body;
+  record["postedAt"] = postedAt;
+  record["expiresAt"] = expiresAt;
+
+  String error;
+  if (!saveCollection("messages", messages, error)) { sendJsonError(client, 422, "Unprocessable Content", error); return; }
+  logEvent("Message posted by " + request.authenticatedUsername);
+  String response;
+  serializeJson(record, response);
+  sendText(client, 201, "Created", "application/json; charset=utf-8", response, "Cache-Control: no-store\r\n");
+}
+
+void handleMessageDelete(WiFiClient& client, const HttpRequest& request, const String& messageId) {
+  if (request.crewBoardHeader != "1") { sendJsonError(client, 403, "Forbidden", "Missing same-origin request marker."); return; }
+  DynamicJsonDocument messages(jsonDocumentCapacity);
+  if (!loadCollection("messages", messages)) { sendJsonError(client, 500, "Internal Server Error", "The message file is invalid."); return; }
+  JsonArray array = messages.as<JsonArray>();
+  const size_t count = array.size();
+  bool* remove = new bool[count]();
+  bool found = false;
+  for (size_t i = 0; i < count; ++i) {
+    if (messageId != (array[i]["id"] | "")) continue;
+    if (!request.isAdmin && request.authenticatedUsername != (array[i]["author"] | "")) {
+      delete[] remove;
+      sendJsonError(client, 403, "Forbidden", "Only the author or the owner can delete this message."); return;
+    }
+    remove[i] = found = true;
+  }
+  if (!found) { delete[] remove; sendJsonError(client, 404, "Not Found", "Message not found."); return; }
+  // Replies are removed with the message they answer, at any depth.
+  for (bool changed = true; changed;) {
+    changed = false;
+    for (size_t i = 0; i < count; ++i) {
+      if (remove[i]) continue;
+      const char* parent = array[i]["parentId"] | "";
+      for (size_t j = 0; parent[0] && j < count; ++j) {
+        if (remove[j] && strcmp(parent, array[j]["id"] | "") == 0) { remove[i] = changed = true; break; }
+      }
+    }
+  }
+  for (size_t i = count; i-- > 0;) if (remove[i]) array.remove(i);
+  delete[] remove;
+
+  String error;
+  if (!saveCollection("messages", messages, error)) { sendJsonError(client, 500, "Internal Server Error", error); return; }
+  logEvent("Message deleted by " + request.authenticatedUsername);
+  sendText(client, 200, "OK", "application/json; charset=utf-8", "{\"ok\":true}", "Cache-Control: no-store\r\n");
+}
+
 void handleApi(WiFiClient& client, const HttpRequest& request) {
   const String prefix = "/api/v1/";
   const String resource = request.path.substring(prefix.length());
   if (resource == "session" && request.method == "GET") {
-    DynamicJsonDocument document(256);
+    DynamicJsonDocument document(512);
     document["username"] = request.authenticatedUsername;
     document["isAdmin"] = request.isAdmin;
+    document["employeeId"] = employeeIdFor(request.authenticatedUsername);
+    JsonArray roles = document["roles"].to<JsonArray>();
+    for (const char* role : rosterRoles) roles.add(role);
     String body; serializeJson(document, body);
     sendText(client, 200, "OK", "application/json; charset=utf-8", body, "Cache-Control: no-store\r\n");
+    return;
+  }
+  if (resource == "profile") {
+    if (request.method == "PUT") handleProfilePut(client, request);
+    else sendJsonError(client, 405, "Method Not Allowed", "Method not supported by the profile API.");
+    return;
+  }
+  if (resource == "messages" && request.method == "POST") { handleMessagePost(client, request); return; }
+  if (resource.startsWith("messages/")) {
+    const String messageId = resource.substring(9);
+    if (request.method == "DELETE" && !messageId.isEmpty() && messageId.length() <= 64) handleMessageDelete(client, request, messageId);
+    else sendJsonError(client, 405, "Method Not Allowed", "Method not supported by this message API.");
     return;
   }
   if (resource == "accounts") {

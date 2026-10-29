@@ -77,9 +77,25 @@ The included JSON records are sample data. Replace them through the owner interf
 2. Wait for the display to show an IP address.
 3. On a device connected to the same network, open `http://IP-ADDRESS/`.
 4. Enter the administrator or staff credentials from `config.json` when the browser asks.
-5. The administrator can edit all CrewBoard records. Staff accounts are read-only in this first version.
+5. The administrator (owner) can edit all CrewBoard records. Staff accounts can read everything, post to the message board, and update their own contact details.
 
 The roster requires only a display name. Business role, phone, email, birthday, emergency contact, notes, username, and password can be added later. Staff passwords are never stored in `roster.json` or returned to the browser; the administrator form updates the protected `users` section of `/config.json`. New credentials take effect immediately without restarting the CYD.
+
+### Permissions and features
+
+- **Roster roles** come from a fixed list for a mowing/landscaping business: Owner, Crew Lead, Crew Member, Equipment Operator, and Trainee. The list is defined in `rosterRoles` in `CrewBoard_CYD.ino` and is returned to the browser by `/api/v1/session`. Records with an older role outside the list must be given a listed role (or none) the next time the owner saves the roster.
+- **Roster editing:** the owner can add, edit, and delete any employee. A staff login that is linked to a roster record gets an **Edit my details** button for its own phone, email, birthday, and emergency contact only. Staff cannot change names, roles, status, or logins, and can never modify a record whose role is Owner.
+- **Message board:** every signed-in user can post and reply, including replies to replies. The server stamps each post with the signed-in username, which is displayed on the message. Authors can delete their own posts; the owner can edit or delete any post. Deleting a post also deletes its replies. Post times come from the browser's clock.
+- **Locations:** latitude and longitude are required. Only locations with coordinates are pinned. The map draws OpenStreetMap tiles when the viewing device has internet access and falls back to the offline grid otherwise.
+- **Schedule:** switch between **List** and **Calendar** views. Select a calendar day to see its jobs.
+
+API endpoints added for staff writes (all require the `X-CrewBoard-Request: 1` header):
+
+| Method and path | Who | Purpose |
+| --- | --- | --- |
+| `POST /api/v1/messages` | Any user | Add a post (`title`, `body`, `postedAt`) or reply (`parentId`, `body`, `postedAt`). |
+| `DELETE /api/v1/messages/{id}` | Author or owner | Delete a post and its replies. |
+| `PUT /api/v1/profile` | Linked staff | Update the signed-in user's own contact fields. |
 
 CrewBoard waits up to 20 seconds for the configured Wi-Fi network. If the network is unavailable or cannot be joined, it automatically starts the configured setup access point. Connect a phone or computer to that access point and browse to the IP shown on the display, normally `http://192.168.4.1/`. The fallback does not provide an in-browser Wi-Fi configuration editor; update the SD-card configuration and restart.
 
@@ -119,15 +135,15 @@ To restore, power off the CYD and copy a known-good `/crewboard` folder and `/co
 
 ## Front-end dependencies
 
-Bootstrap 5.3.3 and jQuery 3.7.1 are stored under `/crewboard/www/vendor` and served locally. CrewBoard does not require a CDN. The optional **Open street map** links on location cards require internet access on the viewing phone or computer; the built-in concentration plot does not.
+Bootstrap 5.3.3 and jQuery 3.7.1 are stored under `/crewboard/www/vendor` and served locally. CrewBoard does not require a CDN. The street-map background and the **Open street map** links on location cards load from openstreetmap.org and need internet access on the viewing phone or computer; pins and the grid work offline.
 
 ## Known limitations
 
 - Traffic uses HTTP Basic authentication without TLS. Use CrewBoard only on a trusted private network or isolated business Wi-Fi.
 - This is a single-client, blocking ESP32 server intended for a small team, not many simultaneous users.
-- JSON collection sizes are capped: 50 roster members, 100 locations, 250 jobs, and 100 messages. API writes are capped at 16 KB.
+- JSON collection sizes are capped: 50 roster members, 100 locations, 250 jobs, and 200 messages (posts plus replies). Each collection file and API write is capped at 24 KB.
 - WebDAV uploads are capped at 8 MB and directory responses list at most 100 entries.
-- The location plot shows relative concentration, not roads, travel time, routing, or live position.
+- The location map shows job concentration, not travel time, routing, or live position.
 - Coordinates must be entered manually. CrewBoard performs no geocoding.
 - The device has no database transactions or guaranteed power-loss protection. Temporary and backup files reduce, but cannot eliminate, SD corruption risk.
 - The server does not provide HTTPS, email, notifications, live GPS, payroll, time tracking, billing, reporting, inventory, equipment tracking, employee home mapping, PTO, or personal schedules.

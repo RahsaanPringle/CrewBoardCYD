@@ -40,24 +40,25 @@
 
     <div class="tab-content">
       <section id="schedule-pane" class="tab-pane fade show active">
-        <div class="section-heading"><div><h2>Team schedule</h2><p>Upcoming jobs and assigned crew.</p></div><button class="btn btn-primary admin-only add-record" data-kind="schedule">Add job</button></div>
+        <div class="section-heading"><div><h2>Team schedule</h2><p>Upcoming jobs and assigned crew.</p></div><div class="d-flex flex-wrap gap-2"><div class="btn-group" role="group" aria-label="Schedule view"><button type="button" class="btn btn-outline-secondary schedule-view active" data-view="list" aria-pressed="true">List</button><button type="button" class="btn btn-outline-secondary schedule-view" data-view="calendar" aria-pressed="false">Calendar</button></div><button class="btn btn-primary admin-only add-record" data-kind="schedule">Add job</button></div></div>
         <div id="schedule-list" class="row g-3"></div>
+        <div id="schedule-calendar" class="d-none"></div>
       </section>
 
       <section id="messages-pane" class="tab-pane fade">
-        <div class="section-heading"><div><h2>Message board</h2><p>Announcements and team updates.</p></div><button class="btn btn-primary admin-only add-record" data-kind="messages">Add message</button></div>
+        <div class="section-heading"><div><h2>Message board</h2><p>Team posts and replies, signed with each user's login name.</p></div><button class="btn btn-primary add-record" data-kind="messages">New message</button></div>
         <div id="messages-list" class="row g-3"></div>
       </section>
 
       <section id="roster-pane" class="tab-pane fade">
         <div class="section-heading"><div><h2>Roster</h2><p>Employee names and business roles only.</p></div><button class="btn btn-primary admin-only add-record" data-kind="roster">Add employee</button></div>
-        <div class="card shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Name</th><th>Role</th><th>Contact</th><th>Birthday</th><th>Login</th><th>Status</th><th class="admin-only text-end">Actions</th></tr></thead><tbody id="roster-list"></tbody></table></div></div>
+        <div class="card shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Name</th><th>Role</th><th>Contact</th><th>Birthday</th><th>Login</th><th>Status</th><th class="text-end"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="roster-list"></tbody></table></div></div>
       </section>
 
       <section id="locations-pane" class="tab-pane fade">
         <div class="section-heading"><div><h2>Business locations</h2><p>Job sites only—never employee home locations.</p></div><button class="btn btn-primary admin-only add-record" data-kind="locations">Add location</button></div>
         <div class="row g-4">
-          <div class="col-lg-7"><div class="card shadow-sm"><div class="card-body"><h3 class="h5">Scheduled-job concentration</h3><p class="small text-secondary">A relative plot based on saved coordinates, not a street map.</p><div id="location-map" class="location-map" role="img" aria-label="Relative plot of business locations"></div></div></div></div>
+          <div class="col-lg-7"><div class="card shadow-sm"><div class="card-body"><h3 class="h5">Scheduled-job concentration</h3><p class="small text-secondary">Pins show the number of jobs at each site. The street map needs internet on this device; the grid works offline.</p><div id="location-map" class="location-map" role="img" aria-label="Map of business locations"></div><p id="location-map-note" class="small text-warning-emphasis mt-2 mb-0"></p></div></div></div>
           <div class="col-lg-5"><div id="locations-list" class="vstack gap-3"></div></div>
         </div>
       </section>
