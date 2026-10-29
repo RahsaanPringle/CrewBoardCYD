@@ -1,0 +1,20 @@
+{
+  "wifi": {
+    "ssid": "YOUR_WIFI_NAME",
+    "password": "YOUR_WIFI_PASSWORD"
+  },
+  "setupAccessPoint": {
+    "ssid": "CrewBoard-Setup",
+    "password": "CHANGE_THIS_SETUP_PASSWORD"
+  },
+  "admin": {
+    "username": "owner",
+    "password": "CHANGE_THIS_TO_A_LONG_UNIQUE_PASSWORD"
+  },
+  "users": [
+    {
+      "username": "staff1",
+      "password": "CHANGE_THIS_STAFF_PASSWORD"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "id": "msg-welcome",
+    "title": "Welcome to CrewBoard",
+    "body": "This is a sample announcement. Sign in as the owner to replace it.",
+    "postedAt": "2026-10-28",
+    "expiresAt": ""
+  }
+]

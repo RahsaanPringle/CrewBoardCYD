@@ -29,3 +29,11 @@ game28.dta
 
 # Log files
 warnings.log
+
+# CrewBoard local secrets and verification output
+CrewBoard_CYD/sd-card/config.json
+CrewBoard_CYD/sd-card/crewboard/data/*.tmp
+CrewBoard_CYD/sd-card/crewboard/data/*.bak
+CrewBoard_CYD/sd-card/crewboard/shared/*.upload
+artifacts/
+CrewBoard_CYD/build/

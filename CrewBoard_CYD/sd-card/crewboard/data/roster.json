@@ -1,0 +1,14 @@
+[
+  {
+    "id": "emp-owner",
+    "name": "Sample Owner",
+    "role": "Owner",
+    "active": true
+  },
+  {
+    "id": "emp-crew-1",
+    "name": "Sample Crew Member",
+    "role": "Crew",
+    "active": true
+  }
+]

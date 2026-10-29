@@ -1,0 +1,12 @@
+[
+  {
+    "id": "job-sample-1",
+    "title": "Sample morning job",
+    "date": "2026-11-02",
+    "startTime": "08:00",
+    "endTime": "10:00",
+    "locationId": "loc-client-1",
+    "crewIds": ["emp-owner", "emp-crew-1"],
+    "notes": "Use the side entrance. This is sample data."
+  }
+]

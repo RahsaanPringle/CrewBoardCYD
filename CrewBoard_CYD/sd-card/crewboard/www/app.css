@@ -1,0 +1,20 @@
+:root { --crew-green: #184c46; --crew-mint: #dceee8; --crew-gold: #e0a52c; }
+body { background: #f4f6f5; color: #172421; min-height: 100vh; }
+.navbar { background: var(--crew-green); }
+.navbar-brand { letter-spacing: .02em; }
+.app-tabs { gap: .35rem; }
+.app-tabs .nav-link { color: var(--crew-green); background: #fff; border: 1px solid #d7dfdc; }
+.app-tabs .nav-link.active { background: var(--crew-green); border-color: var(--crew-green); }
+.section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1rem; }
+.section-heading h2 { font-size: 1.45rem; margin-bottom: .15rem; }
+.section-heading p { color: #64716d; margin: 0; }
+.card { border: 1px solid #dce3e0; }
+.job-date { min-width: 4.75rem; background: var(--crew-mint); color: var(--crew-green); border-radius: .65rem; padding: .6rem; text-align: center; }
+.job-date strong { display: block; font-size: 1.35rem; }
+.record-actions { white-space: nowrap; }
+.location-map { position: relative; min-height: 360px; overflow: hidden; border-radius: .75rem; border: 1px solid #bed0ca; background-color: #e9f0ec; background-image: linear-gradient(rgba(24,76,70,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(24,76,70,.08) 1px,transparent 1px); background-size: 32px 32px; }
+.map-point { position: absolute; transform: translate(-50%,-50%); display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 3px solid #fff; border-radius: 50%; background: var(--crew-gold); color: #1f2a27; font-weight: 700; box-shadow: 0 .2rem .6rem rgba(0,0,0,.25); cursor: default; }
+.map-label { position: absolute; transform: translate(-50%,1.5rem); max-width: 9rem; padding: .1rem .35rem; border-radius: .25rem; background: rgba(255,255,255,.9); font-size: .75rem; text-align: center; }
+.empty-state { padding: 2rem; text-align: center; color: #64716d; background: #fff; border: 1px dashed #bdc9c5; border-radius: .75rem; }
+textarea { min-height: 7rem; }
+@media (max-width: 575.98px) { .app-tabs { display: grid; grid-template-columns: 1fr 1fr; } .location-map { min-height: 300px; } }
