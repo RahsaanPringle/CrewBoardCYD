@@ -10,7 +10,7 @@ I want to build **CrewBoard**, a local-first business coordination server for ve
 
 ### Starting point and working rules
 
-- First inspect the existing `CYD-WebDAVServer-DD.ino` file and describe its current behavior, storage choices, Wi-Fi setup, and HTTP request handling before changing code.
+- First inspect the existing `CYD-Intranet-Config\CYD-Intranet-Config.ino` file and describe its current behavior, storage choices, Wi-Fi setup, and HTTP request handling before changing code.
 - Treat it as the existing baseline. Do not overwrite it. Create a clearly named new `.ino` file for CrewBoard and preserve existing WebDAV behavior if it can be retained safely alongside the new features.
 - Work incrementally and keep the implementation appropriate for the ESP32 CYD, its limited memory, and microSD storage. Avoid heavyweight frameworks, cloud services, large dependencies, or features that require a full server.
 - Keep the staff interface in small HTML, CSS, and JavaScript files served by the CYD to phones or computers on the local business network. The CYD's small screen is for setup and status; normal app use is on a phone or computer.
