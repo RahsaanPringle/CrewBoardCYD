@@ -1,7 +1,11 @@
 {
   "wifi": {
-    "ssid": "Fivenet",
-    "password": "jump70lake"
+    "ssid": "ssid",
+    "password": "password"
+  },
+  "setupAccessPoint": {
+    "ssid": "ssid",
+    "password": "password"
   },
   "admin": {
     "username": "cyd",
@@ -9,8 +13,8 @@
   },
   "users": [
     {
-      "username": "Raalnan5",
-      "password": "Rhyt67"
+      "username": "username",
+      "password": "password"
     }
   ]
 }

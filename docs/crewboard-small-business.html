@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CrewBoard is a small, local-first crew coordination server for businesses that need a shared plan, not corporate email accounts or a server room.">
+  <title>CrewBoard | A shared plan. Not a server room.</title>
+  <style>
+    :root {
+      --ink: #172f28;
+      --green: #164c3c;
+      --mint: #e4eee6;
+      --paper: #f7f5ef;
+      --white: #fff;
+      --muted: #52675c;
+      --line: #d7dfd5;
+      --gold: #efc566;
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    a { color: inherit; text-underline-offset: .2em; }
+    a:focus-visible { outline: 3px solid #aa6700; outline-offset: 5px; }
+    .wrap { max-width: 1160px; margin-inline: auto; padding-inline: 28px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-block: 22px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 1.25rem; font-weight: 800; letter-spacing: -.04em; }
+    .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; background: var(--green); color: var(--gold); border-radius: 9px; font-size: .85rem; letter-spacing: 0; }
+    .topbar nav { display: flex; gap: 24px; font-size: .85rem; font-weight: 600; }
+    .topbar nav a { text-decoration: none; }
+    .eyebrow { margin: 0 0 18px; font-size: .73rem; font-weight: 800; text-transform: uppercase; letter-spacing: .15em; }
+    .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 54px; align-items: center; padding-block: 62px 68px; }
+    h1 { font-size: clamp(2.8rem, 5.2vw, 4.7rem); line-height: 1.05; letter-spacing: -.065em; margin: 0 0 26px; font-weight: 800; }
+    h1 span { color: #527d50; }
+    .lead { max-width: 540px; font-size: 1.12rem; color: var(--muted); margin: 0 0 26px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--green); color: var(--white); font-weight: 700; font-size: .9rem; padding: 13px 20px; text-decoration: none; }
+    .hero-note { display: block; margin-top: 16px; font-size: .8rem; color: var(--muted); }
+    .preview { position: relative; background: var(--green); padding: 27px; border-radius: 28px; box-shadow: 0 24px 60px #123b2021; }
+    .preview-label { color: #e5eee2; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 17px; }
+    .board { background: #f5f7f3; border-radius: 15px; padding: 20px; }
+    .board-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .board-header strong { font-size: .95rem; }
+    .badge { display: inline-block; font-size: .65rem; background: var(--mint); color: var(--green); padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+    .tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 16px; font-size: .73rem; color: var(--muted); }
+    .tabs strong { color: var(--green); }
+    .job { display: flex; gap: 12px; background: var(--white); border: 1px solid var(--line); padding: 13px; border-radius: 10px; margin-bottom: 10px; }
+    .time { font-weight: 800; font-size: .8rem; white-space: nowrap; padding-top: 2px; color: var(--green); }
+    .job strong { display: block; font-size: .83rem; }
+    .job p { margin: 2px 0 0; color: var(--muted); font-size: .74rem; }
+    .message { background: #fcf0cf; padding: 12px 14px; border-radius: 10px; margin-top: 16px; font-size: .77rem; }
+    .message p { margin: 3px 0; }
+    .message small { color: #65532b; }
+    .preview-foot { display: flex; gap: 10px; align-items: center; justify-content: center; color: #e5eee2; font-size: .75rem; margin-top: 19px; }
+    .device { width: 39px; height: 27px; background: #25302a; border: 3px solid var(--gold); border-radius: 5px; flex-shrink: 0; }
+    .proof-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 24px; }
+    .proof-strip strong { display: block; font-size: .9rem; }
+    .proof-strip span { font-size: .8rem; color: var(--muted); }
+    section { padding-block: 68px; scroll-margin-top: 24px; }
+    h2 { font-size: clamp(1.9rem, 3.2vw, 2.8rem); line-height: 1.15; letter-spacing: -.045em; max-width: 700px; margin: 0 0 24px; }
+    h3 { font-size: 1.1rem; letter-spacing: -.025em; margin: 0 0 10px; line-height: 1.35; }
+    .intro { color: var(--muted); max-width: 720px; margin: 0 0 30px; }
+    .story { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+    .story p { color: var(--muted); margin: 0 0 18px; }
+    .pullquote { border-left: 4px solid var(--gold); padding-left: 24px; font-size: 1.5rem; line-height: 1.35; letter-spacing: -.035em; font-weight: 650; margin: 28px 0 0; }
+    .question-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+    .question-list li { padding: 17px 0; border-bottom: 1px solid var(--line); font-weight: 600; }
+    .question-list span { color: var(--muted); font-weight: 400; font-size: .85rem; display: block; margin-top: 3px; }
+    .tinted { background: var(--mint); }
+    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .feature { background: var(--white); padding: 28px; border: 1px solid #d5dfd1; border-radius: var(--radius); }
+    .feature-number { color: #56724b; font-size: .75rem; font-weight: 800; display: block; margin-bottom: 22px; }
+    .feature p { color: var(--muted); font-size: .94rem; margin: 0; }
+    .feature .outcome { color: var(--green); font-size: .85rem; font-weight: 650; margin-top: 17px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 34px; }
+    .step-number { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #9fae96; border-radius: 50%; font-weight: 700; margin-bottom: 20px; }
+    .steps p { font-size: .94rem; color: var(--muted); margin: 0; }
+    .callout { padding: 22px 26px; border-radius: 14px; background: #ebe9df; margin-top: 32px; font-size: .88rem; color: #3e5245; }
+    .fit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    .fit-grid ul { padding-left: 20px; color: var(--muted); }
+    .fit-grid li { margin-bottom: 10px; }
+    .fit-grid h3 { font-size: 1.3rem; }
+    .faq { border-top: 1px solid var(--line); }
+    .faq article { padding: 23px 0; border-bottom: 1px solid var(--line); }
+    .faq h3 { font-size: 1rem; }
+    .faq p { margin: 0; color: var(--muted); max-width: 850px; font-size: .94rem; }
+    .cta { background: var(--green); color: var(--white); padding: 42px; border-radius: var(--radius); }
+    .cta h2 { max-width: 780px; }
+    .cta p { max-width: 720px; color: #e0e8dc; }
+    .cta .button { background: var(--gold); color: var(--ink); margin-top: 12px; }
+    .closing { padding-top: 0; }
+    footer { border-top: 1px solid var(--line); padding-block: 24px 38px; color: var(--muted); font-size: .77rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+    footer p { margin: 0; }
+    @media (max-width: 800px) {
+      .hero { gap: 32px; padding-block: 32px 42px; }
+      .hero, .story { grid-template-columns: 1fr; }
+      .story { gap: 28px; }
+      .preview { max-width: 540px; }
+      .steps { gap: 20px; }
+      .fit-grid { gap: 24px; }
+    }
+    @media (max-width: 540px) {
+      .wrap { padding-inline: 20px; }
+      .topbar nav { gap: 14px; font-size: .75rem; }
+      h1 { font-size: 3rem; }
+      section { padding-block: 44px; }
+      .proof-strip, .feature-grid, .steps, .fit-grid { grid-template-columns: 1fr; }
+      .proof-strip { gap: 16px; }
+      .preview { padding: 17px; }
+      .board { padding: 14px; }
+      .cta { padding: 26px; }
+      .tabs { gap: 9px; font-size: .68rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print {
+      body { background: white; font-size: 10pt; }
+      .wrap { max-width: none; padding-inline: 0; }
+      .topbar nav, .button { display: none; }
+      .topbar { padding-top: 0; }
+      .hero { padding-block: 20px; gap: 24px; }
+      h1 { font-size: 34pt; }
+      h2 { font-size: 22pt; }
+      section { padding-block: 24px; }
+      .preview { box-shadow: none; border: 1px solid var(--line); }
+      .feature, .cta, .faq article { break-inside: avoid; }
+      .cta, .cta p, .preview-label, .preview-foot { color: var(--ink); }
+      .cta { border: 1px solid var(--line); }
+      h2, h3 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap topbar">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">CB</span>CrewBoard</a>
+    <nav aria-label="Page sections"><a href="#why">Why CrewBoard</a><a href="#features">What it does</a><a href="#fit">Is it a fit?</a></nav>
+  </header>
+
+  <main id="top">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">A small server for hands-on businesses</p>
+          <h1>Your crew needs a plan.<br><span>Not a server room.</span></h1>
+          <p class="lead">CrewBoard puts the schedule, crew updates, and job sites in one place on your local Wi-Fi. A small device for the shop. A shared board on the phones your team already uses.</p>
+          <a class="button" href="#day">See a day with CrewBoard</a>
+          <span class="hero-note">No corporate email accounts needed. No app to install.</span>
+        </div>
+        <aside class="preview" aria-label="Illustrative CrewBoard schedule and message board, not a live screenshot">
+          <p class="preview-label">An example morning at the shop</p>
+          <div class="board">
+            <div class="board-header"><strong>CrewBoard</strong><span class="badge">Local Wi-Fi</span></div>
+            <div class="tabs" aria-hidden="true"><strong>Schedule</strong><span>Messages</span><span>Roster</span><span>Locations</span></div>
+            <div class="job"><span class="time">8:00 AM</span><div><strong>Oak Street properties</strong><p>North crew &middot; Mow and edge</p></div></div>
+            <div class="job"><span class="time">10:30 AM</span><div><strong>Market Square grounds</strong><p>South crew &middot; Use the service entrance</p></div></div>
+            <div class="message"><strong>Owner &middot; Message board</strong><p>Rain changed the afternoon plan. Check the updated schedule before heading out.</p><small>Crew Lead replied: Got it. We'll check before we leave.</small></div>
+          </div>
+          <div class="preview-foot"><span class="device" aria-hidden="true"></span><span>Small device. Shared information. Your network.</span></div>
+        </aside>
+      </div>
+      <div class="proof-strip">
+        <div><strong>Open it in a browser</strong><span>Phones, tablets, and computers on the local network.</span></div>
+        <div><strong>Keep the core work local</strong><span>Schedules and messages do not need a cloud connection.</span></div>
+        <div><strong>Give people a login, not a mailbox</strong><span>Named crew accounts without company email addresses.</span></div>
+      </div>
+    </div>
+
+    <section id="why" class="wrap">
+      <div class="story">
+        <div>
+          <p class="eyebrow">Built around the work, not the office</p>
+          <h2>A successful lawncare business doesn't need a corporate inbox for every mower.</h2>
+          <p>A business can grow through reliable work, good equipment, and a dependable crew without ever needing an email server or a corporate email address for each employee.</p>
+          <p>But the need to coordinate is still there. Owners need one place for the plan. Crew members need to know where they're going, who they're working with, and what changed.</p>
+          <div class="pullquote">You don't need to turn every worker into an office worker to keep everyone on the same page.</div>
+        </div>
+        <div>
+          <ul class="question-list">
+            <li>Where are we working today?<span>A shared schedule with job sites and assigned crew.</span></li>
+            <li>Who's coming with me?<span>A roster and crew assignments people can check themselves.</span></li>
+            <li>Did the plan change?<span>A message board with named posts and replies.</span></li>
+            <li>What do I need to know about this site?<span>Job notes and saved business locations.</span></li>
+          </ul>
+          <p style="margin-top: 22px;">CrewBoard is not a smaller email system. It's a different tool for these everyday questions.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="tinted">
+      <div class="wrap">
+        <p class="eyebrow">Four practical tools. One place to look.</p>
+        <h2>A shared board for the things your crew asks about every day.</h2>
+        <p class="intro">The current CrewBoard prototype brings these tools together on a small ESP32-based device. Staff use the browser; the device's screen shows setup and network status.</p>
+        <div class="feature-grid">
+          <article class="feature">
+            <span class="feature-number">01 / THE PLAN</span>
+            <h3>A schedule people can check</h3>
+            <p>List and calendar views show jobs, times, locations, assigned crew, and practical notes. The owner manages the schedule.</p>
+            <p class="outcome">One place to check before the crew leaves the shop.</p>
+          </article>
+          <article class="feature">
+            <span class="feature-number">02 / THE CONVERSATION</span>
+            <h3>Updates without company email</h3>
+            <p>Anyone signed in can post or reply. Usernames show who said what, and replies stay with the conversation.</p>
+            <p class="outcome">A shared notice board instead of another set of mailboxes.</p>
+          </article>
+          <article class="feature">
+            <span class="feature-number">03 / THE PEOPLE</span>
+            <h3>A roster that fits a working crew</h3>
+            <p>The owner manages crew records and landscaping roles. Linked crew members can update their own contact details without changing the owner's record.</p>
+            <p class="outcome">Know who's on the team and who's assigned to the job.</p>
+          </article>
+          <article class="feature">
+            <span class="feature-number">04 / THE PLACES</span>
+            <h3>Keep job sites on the map</h3>
+            <p>Save business addresses and coordinates. Pins show scheduled-job counts; street maps load when the viewing device has internet, with a grid available offline.</p>
+            <p class="outcome">A useful picture of the work, not employee tracking.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="day" class="wrap">
+      <p class="eyebrow">Picture it in the business</p>
+      <h2>Before the first truck leaves.</h2>
+      <p class="intro">An illustrative lawncare workflow. The value isn't a new screen to watch all day; it's knowing where to look for the plan.</p>
+      <div class="steps">
+        <article><span class="step-number">1</span><h3>The owner sets the day.</h3><p>Assign jobs, choose the crew, and add site notes. Post an update if weather or priorities change the plan.</p></article>
+        <article><span class="step-number">2</span><h3>The crew checks in.</h3><p>At the shop, employees connect to the business Wi-Fi, open CrewBoard in a browser, and sign in with their own username.</p></article>
+        <article><span class="step-number">3</span><h3>Questions have a place.</h3><p>A crew member replies to an update or posts a question while connected. The answer stays on the board for others to see.</p></article>
+      </div>
+      <div class="callout"><strong>Local means local.</strong> The current device is a shop-side coordination hub, not a mobile dispatch service. Crew members cannot check it from a job site unless they are connected to the network that can reach it. There are no push notifications; people open or refresh the board to see updates.</div>
+    </section>
+
+    <section id="fit" class="tinted">
+      <div class="wrap">
+        <p class="eyebrow">Right-sized, not all-purpose</p>
+        <h2>A small server for a business that would never buy a traditional one.</h2>
+        <div class="fit-grid">
+          <div>
+            <h3>A good conversation to have if...</h3>
+            <ul>
+              <li>Your team starts or ends the day at a shared shop, yard, or small premises.</li>
+              <li>You need shared schedules and updates, not an inbox for every employee.</li>
+              <li>You want the core information stored on a device at your business.</li>
+              <li>You have a small team and someone who can own setup and backups.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>A different tool is needed if...</h3>
+            <ul>
+              <li>Your crew needs live dispatch and updates from anywhere over cellular data.</li>
+              <li>You need payroll, invoicing, route optimization, or a full customer-management system.</li>
+              <li>You need enterprise security, high availability, or many simultaneous users.</li>
+              <li>You need sensitive records managed with strong access controls and encrypted connections.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="questions-title">
+      <p class="eyebrow">The questions an owner should ask</p>
+      <h2 id="questions-title">Simple doesn't have to mean vague.</h2>
+      <div class="faq">
+        <article><h3>Do my employees need company email addresses?</h3><p>No. CrewBoard uses local usernames and passwords. It does not host email, create mailboxes, or require an email subscription for each employee.</p></article>
+        <article><h3>Does this replace Microsoft Exchange or Microsoft 365?</h3><p>No. Those products solve broader email and office-collaboration needs. CrewBoard is for a narrower job: helping a small crew share a plan without adopting corporate email in the first place.</p></article>
+        <article><h3>Does it need the internet?</h3><p>The core board runs on the local network without an internet connection. Phones still need to reach the CYD over Wi-Fi. The optional street-map background and external map links need internet on the viewing device.</p></article>
+        <article><h3>Where does the information live?</h3><p>On a microSD card in the device, rather than in a required hosted service. Backups are manual: someone needs to copy the card's data and protect the copies. Local storage does not remove the need for backups or careful handling of employee information.</p></article>
+        <article><h3>How much IT does it take?</h3><p>There is no conventional server operating system or email platform to administer, but this is not maintenance-free. Someone still handles Wi-Fi setup, device updates, user accounts, and backups. Packaging those tasks as an installation or support service is a possible offering, not an existing included service.</p></article>
+        <article><h3>Is it ready to be sold as a fully supported appliance?</h3><p>This page describes a working prototype and its product opportunity, not a production-readiness guarantee. The current build uses unencrypted HTTP and is intended only for a trusted private network. Do not expose it directly to the internet or use it for sensitive records. Production security, durability, support, and deployment requirements need to be established before a commercial rollout.</p></article>
+        <article><h3>What's the price?</h3><p>Hardware, installation, and support pricing have not been set. The current core workflow does not require a cloud service or employee email subscriptions; that is an architectural choice, not a promise of free hardware, setup, or ongoing support.</p></article>
+      </div>
+    </section>
+
+    <section class="wrap closing" aria-labelledby="demo-title">
+      <div class="cta">
+        <p class="eyebrow">A useful next step</p>
+        <h2 id="demo-title">Start with one crew, one shop, and a real day's work.</h2>
+        <p>Load a sample schedule. Give the owner and crew separate logins. Try a morning briefing and a message-board conversation on the local Wi-Fi. Then decide whether this small, focused tool solves a real coordination problem for that business.</p>
+        <a class="button" href="../CrewBoard_CYD/README.md">Explore the prototype and setup guide</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p><strong>CrewBoard</strong> &middot; A shared plan. Not a server room.</p>
+    <p>Illustrative sales overview &middot; Current prototype capabilities, not a service-level commitment.</p>
+  </footer>
+</body>
+</html>

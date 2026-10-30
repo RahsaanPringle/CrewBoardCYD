@@ -1,243 +1,539 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reaching CrewBoard by Name Instead of IP Address</title>
   <style>
-    :root { --green: #184c46; --mint: #dceee8; --gold: #e0a52c; --muted: #64716d; --line: #d7dfdc; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #172421; background: #f4f6f5; }
-    header { background: var(--green); color: #fff; padding: 2rem 1.25rem; }
-    header h1 { margin: 0 0 .25rem; font-size: 1.8rem; }
-    header p { margin: 0; opacity: .85; }
-    main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
-    nav.toc { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
-    nav.toc ol { margin: .25rem 0 0; padding-left: 1.25rem; }
-    h2 { color: var(--green); margin-top: 2.5rem; border-bottom: 2px solid var(--mint); padding-bottom: .25rem; }
-    h3 { margin-top: 1.75rem; }
-    a { color: var(--green); }
-    code, pre { font-family: Consolas, "Cascadia Mono", monospace; font-size: .92em; }
-    code { background: #e9efec; padding: .05rem .3rem; border-radius: .25rem; }
-    pre { background: #1e2a27; color: #e6efec; padding: 1rem; border-radius: .5rem; overflow-x: auto; }
-    pre code { background: none; padding: 0; color: inherit; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: .5rem; overflow: hidden; font-size: .95rem; }
-    th, td { padding: .55rem .7rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    th { background: var(--mint); color: var(--green); }
-    .table-wrap { overflow-x: auto; }
-    .card { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem 1.25rem; margin: 1rem 0; }
-    .note { border-left: 4px solid var(--gold); background: #fff8e6; padding: .75rem 1rem; border-radius: .25rem; margin: 1rem 0; }
-    .tip { border-left: 4px solid var(--green); background: var(--mint); padding: .75rem 1rem; border-radius: .25rem; margin: 1rem 0; }
-    .yes { color: #1d7a3a; font-weight: 600; }
-    .no { color: #b3261e; font-weight: 600; }
-    .maybe { color: #9a6b00; font-weight: 600; }
-    .pill { display: inline-block; padding: 0 .5rem; border-radius: 1rem; background: var(--mint); color: var(--green); font-size: .8rem; font-weight: 600; }
-    dl dt { font-weight: 600; margin-top: .75rem; }
-    dl dd { margin-left: 1rem; }
-    footer { color: var(--muted); font-size: .85rem; margin-top: 3rem; }
+    :root {
+      --green: #184c46;
+      --mint: #dceee8;
+      --gold: #e0a52c;
+      --muted: #64716d;
+      --line: #d7dfdc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: #172421;
+      background: #f4f6f5;
+    }
+
+    header {
+      background: var(--green);
+      color: #fff;
+      padding: 2rem 1.25rem;
+    }
+
+    header h1 {
+      margin: 0 0 .25rem;
+      font-size: 1.8rem;
+    }
+
+    header p {
+      margin: 0;
+      opacity: .85;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+
+    nav.toc {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .75rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    nav.toc ol {
+      margin: .25rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    h2 {
+      color: var(--green);
+      margin-top: 2.5rem;
+      border-bottom: 2px solid var(--mint);
+      padding-bottom: .25rem;
+    }
+
+    h3 {
+      margin-top: 1.75rem;
+    }
+
+    a {
+      color: var(--green);
+    }
+
+    code,
+    pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: .92em;
+    }
+
+    code {
+      background: #e9efec;
+      padding: .05rem .3rem;
+      border-radius: .25rem;
+    }
+
+    pre {
+      background: #1e2a27;
+      color: #e6efec;
+      padding: 1rem;
+      border-radius: .5rem;
+      overflow-x: auto;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .5rem;
+      overflow: hidden;
+      font-size: .95rem;
+    }
+
+    th,
+    td {
+      padding: .55rem .7rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--mint);
+      color: var(--green);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .75rem;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+    }
+
+    .note {
+      border-left: 4px solid var(--gold);
+      background: #fff8e6;
+      padding: .75rem 1rem;
+      border-radius: .25rem;
+      margin: 1rem 0;
+    }
+
+    .tip {
+      border-left: 4px solid var(--green);
+      background: var(--mint);
+      padding: .75rem 1rem;
+      border-radius: .25rem;
+      margin: 1rem 0;
+    }
+
+    .yes {
+      color: #1d7a3a;
+      font-weight: 600;
+    }
+
+    .no {
+      color: #b3261e;
+      font-weight: 600;
+    }
+
+    .maybe {
+      color: #9a6b00;
+      font-weight: 600;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 0 .5rem;
+      border-radius: 1rem;
+      background: var(--mint);
+      color: var(--green);
+      font-size: .8rem;
+      font-weight: 600;
+    }
+
+    dl dt {
+      font-weight: 600;
+      margin-top: .75rem;
+    }
+
+    dl dd {
+      margin-left: 1rem;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-top: 3rem;
+    }
   </style>
 </head>
+
 <body>
-<header>
-  <h1>Reaching CrewBoard by Name Instead of IP Address</h1>
-  <p>Options for opening the CYD at <code>http://cydnet/</code> or <code>http://cydnet.local/</code> instead of <code>http://192.168.4.27/</code>.</p>
-</header>
-<main>
-  <nav class="toc">
-    <strong>Contents</strong>
+  <header>
+    <h1>Reaching CrewBoard by Name Instead of IP Address</h1>
+    <p>Options for opening the CYD at <code>http://cydnet/</code> or <code>http://cydnet.local/</code> instead of
+      <code>http://192.168.4.27/</code>.</p>
+  </header>
+  <main>
+    <nav class="toc">
+      <strong>Contents</strong>
+      <ol>
+        <li><a href="#background">Background: how names become addresses</a></li>
+        <li><a href="#localhost">Why <code>localhost</code> is different</a></li>
+        <li><a href="#compare">The options at a glance</a></li>
+        <li><a href="#mdns">Option 1: mDNS (<code>cydnet.local</code>)</a></li>
+        <li><a href="#dhcp">Option 2: Device hostname + router DNS</a></li>
+        <li><a href="#netbios">Option 3: NetBIOS (Windows only)</a></li>
+        <li><a href="#dns">Option 4: A local DNS server</a></li>
+        <li><a href="#hosts">Option 5: The hosts file</a></li>
+        <li><a href="#reservation">Do this regardless: reserve the IP address</a></li>
+        <li><a href="#pitfalls">Things that can get in the way</a></li>
+        <li><a href="#testing">How to test a name</a></li>
+        <li><a href="#recommendation">Recommendation for CrewBoard</a></li>
+        <li><a href="#glossary">Glossary</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="background">1. Background: how names become addresses</h2>
+    <p>Browsers connect to IP addresses, not names. When you type a name, your device has to <em>resolve</em> it to an
+      address first. It tries several methods, roughly in this order:</p>
     <ol>
-      <li><a href="#background">Background: how names become addresses</a></li>
-      <li><a href="#localhost">Why <code>localhost</code> is different</a></li>
-      <li><a href="#compare">The options at a glance</a></li>
-      <li><a href="#mdns">Option 1: mDNS (<code>cydnet.local</code>)</a></li>
-      <li><a href="#dhcp">Option 2: Device hostname + router DNS</a></li>
-      <li><a href="#netbios">Option 3: NetBIOS (Windows only)</a></li>
-      <li><a href="#dns">Option 4: A local DNS server</a></li>
-      <li><a href="#hosts">Option 5: The hosts file</a></li>
-      <li><a href="#reservation">Do this regardless: reserve the IP address</a></li>
-      <li><a href="#pitfalls">Things that can get in the way</a></li>
-      <li><a href="#testing">How to test a name</a></li>
-      <li><a href="#recommendation">Recommendation for CrewBoard</a></li>
-      <li><a href="#glossary">Glossary</a></li>
+      <li><strong>The hosts file</strong> on the device itself.</li>
+      <li><strong>DNS</strong> — it asks the DNS server it was given by the router (usually the router itself, which
+        forwards to your internet provider).</li>
+      <li><strong>Multicast methods</strong> on the local network — mDNS for names ending in <code>.local</code>, and on
+        Windows also LLMNR and NetBIOS for single-word names.</li>
     </ol>
-  </nav>
+    <p>Every option in this guide just makes one of those methods answer “<code>cydnet</code> is 192.168.4.27”. The
+      difference is <em>who</em> answers: the CYD itself, your router, a separate DNS server, or a file on each
+      computer.</p>
 
-  <h2 id="background">1. Background: how names become addresses</h2>
-  <p>Browsers connect to IP addresses, not names. When you type a name, your device has to <em>resolve</em> it to an address first. It tries several methods, roughly in this order:</p>
-  <ol>
-    <li><strong>The hosts file</strong> on the device itself.</li>
-    <li><strong>DNS</strong> — it asks the DNS server it was given by the router (usually the router itself, which forwards to your internet provider).</li>
-    <li><strong>Multicast methods</strong> on the local network — mDNS for names ending in <code>.local</code>, and on Windows also LLMNR and NetBIOS for single-word names.</li>
-  </ol>
-  <p>Every option in this guide just makes one of those methods answer “<code>cydnet</code> is 192.168.4.27”. The difference is <em>who</em> answers: the CYD itself, your router, a separate DNS server, or a file on each computer.</p>
+    <h2 id="localhost">2. Why <code>localhost</code> is different</h2>
+    <p><code>localhost</code> is reserved to always mean “this same machine” (address <code>127.0.0.1</code>). Every
+      operating system answers it internally without asking the network, which is why it works with no setup. It can
+      never point at another device such as the CYD, so there’s no equivalent to set up — you need one of the options
+      below.</p>
+    <div class="note">Names are case-insensitive. <code>CYDNet</code>, <code>cydnet</code>, and <code>CYDNET</code> are
+      the same name.</div>
 
-  <h2 id="localhost">2. Why <code>localhost</code> is different</h2>
-  <p><code>localhost</code> is reserved to always mean “this same machine” (address <code>127.0.0.1</code>). Every operating system answers it internally without asking the network, which is why it works with no setup. It can never point at another device such as the CYD, so there’s no equivalent to set up — you need one of the options below.</p>
-  <div class="note">Names are case-insensitive. <code>CYDNet</code>, <code>cydnet</code>, and <code>CYDNET</code> are the same name.</div>
+    <h2 id="compare">3. The options at a glance</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Address you type</th>
+            <th>Phones</th>
+            <th>Windows</th>
+            <th>Mac</th>
+            <th>CYD firmware change</th>
+            <th>Extra equipment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#mdns">1. mDNS</a></td>
+            <td><code>cydnet.local</code></td>
+            <td><span class="yes">iPhone: yes</span><br><span class="maybe">Android: most recent versions</span></td>
+            <td><span class="yes">Win 10+</span></td>
+            <td><span class="yes">Yes</span></td>
+            <td>Yes (small)</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <td><a href="#dhcp">2. Hostname + router</a></td>
+            <td><code>cydnet</code> or <code>cydnet.lan</code></td>
+            <td colspan="3"><span class="maybe">All devices, if your router supports it</span></td>
+            <td>Yes (one line), or rename in router</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <td><a href="#netbios">3. NetBIOS</a></td>
+            <td><code>cydnet</code></td>
+            <td><span class="no">No</span></td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">No</span></td>
+            <td>Yes (small)</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <td><a href="#dns">4. Local DNS server</a></td>
+            <td><code>cydnet</code> (or any name)</td>
+            <td colspan="3"><span class="yes">All devices using that DNS server</span></td>
+            <td>No</td>
+            <td>Router feature, Pi-hole, or always-on PC</td>
+          </tr>
+          <tr>
+            <td><a href="#hosts">5. Hosts file</a></td>
+            <td><code>cydnet</code></td>
+            <td><span class="no">Not practical</span></td>
+            <td><span class="yes">Each PC you edit</span></td>
+            <td><span class="yes">Each Mac you edit</span></td>
+            <td>No</td>
+            <td>None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The options can be combined. For example, mDNS + NetBIOS + a device hostname covers almost everything without
+      extra equipment.</p>
 
-  <h2 id="compare">3. The options at a glance</h2>
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th>Option</th><th>Address you type</th><th>Phones</th><th>Windows</th><th>Mac</th><th>CYD firmware change</th><th>Extra equipment</th></tr></thead>
-    <tbody>
-      <tr><td><a href="#mdns">1. mDNS</a></td><td><code>cydnet.local</code></td><td><span class="yes">iPhone: yes</span><br><span class="maybe">Android: most recent versions</span></td><td><span class="yes">Win 10+</span></td><td><span class="yes">Yes</span></td><td>Yes (small)</td><td>None</td></tr>
-      <tr><td><a href="#dhcp">2. Hostname + router</a></td><td><code>cydnet</code> or <code>cydnet.lan</code></td><td colspan="3"><span class="maybe">All devices, if your router supports it</span></td><td>Yes (one line), or rename in router</td><td>None</td></tr>
-      <tr><td><a href="#netbios">3. NetBIOS</a></td><td><code>cydnet</code></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td><td>Yes (small)</td><td>None</td></tr>
-      <tr><td><a href="#dns">4. Local DNS server</a></td><td><code>cydnet</code> (or any name)</td><td colspan="3"><span class="yes">All devices using that DNS server</span></td><td>No</td><td>Router feature, Pi-hole, or always-on PC</td></tr>
-      <tr><td><a href="#hosts">5. Hosts file</a></td><td><code>cydnet</code></td><td><span class="no">Not practical</span></td><td><span class="yes">Each PC you edit</span></td><td><span class="yes">Each Mac you edit</span></td><td>No</td><td>None</td></tr>
-    </tbody>
-  </table>
-  </div>
-  <p>The options can be combined. For example, mDNS + NetBIOS + a device hostname covers almost everything without extra equipment.</p>
-
-  <h2 id="mdns">4. Option 1: mDNS (<code>cydnet.local</code>) <span class="pill">Easiest, no equipment</span></h2>
-  <p><strong>Multicast DNS</strong> lets a device answer for its own name. When a phone looks up <code>cydnet.local</code>, it sends a question to everyone on the local network, and the CYD replies with its address. Apple calls this <em>Bonjour</em>; it’s also how printers and smart speakers are discovered.</p>
-  <h3>What it would take</h3>
-  <p>The ESP32 Arduino core includes an <code>ESPmDNS</code> library. After the CYD joins Wi-Fi, the firmware would call something like:</p>
-<pre><code>#include &lt;ESPmDNS.h&gt;
+    <h2 id="mdns">4. Option 1: mDNS (<code>cydnet.local</code>) <span class="pill">Easiest, no equipment</span></h2>
+    <p><strong>Multicast DNS</strong> lets a device answer for its own name. When a phone looks up
+      <code>cydnet.local</code>, it sends a question to everyone on the local network, and the CYD replies with its
+      address. Apple calls this <em>Bonjour</em>; it’s also how printers and smart speakers are discovered.</p>
+    <h3>What it would take</h3>
+    <p>The ESP32 Arduino core includes an <code>ESPmDNS</code> library. After the CYD joins Wi-Fi, the firmware would
+      call something like:</p>
+    <pre><code>#include &lt;ESPmDNS.h&gt;
 
 if (MDNS.begin("cydnet")) {             // answers to cydnet.local
   MDNS.addService("http", "tcp", 80);   // advertises the web server
 }</code></pre>
-  <h3>Pros and cons</h3>
-  <ul>
-    <li><span class="yes">+</span> Works without touching the router or adding hardware.</li>
-    <li><span class="yes">+</span> Follows the CYD automatically if its IP address changes.</li>
-    <li><span class="no">−</span> The address must end in <code>.local</code>; plain <code>cydnet</code> won’t use mDNS.</li>
-    <li><span class="no">−</span> Some older Android phones and some Android browsers don’t resolve <code>.local</code> names.</li>
-    <li><span class="no">−</span> Doesn’t cross networks: guest Wi-Fi, separate VLANs, or “AP/client isolation” will block it.</li>
-  </ul>
+    <h3>Pros and cons</h3>
+    <ul>
+      <li><span class="yes">+</span> Works without touching the router or adding hardware.</li>
+      <li><span class="yes">+</span> Follows the CYD automatically if its IP address changes.</li>
+      <li><span class="no">−</span> The address must end in <code>.local</code>; plain <code>cydnet</code> won’t use
+        mDNS.</li>
+      <li><span class="no">−</span> Some older Android phones and some Android browsers don’t resolve
+        <code>.local</code> names.</li>
+      <li><span class="no">−</span> Doesn’t cross networks: guest Wi-Fi, separate VLANs, or “AP/client isolation” will
+        block it.</li>
+    </ul>
 
-  <h2 id="dhcp">5. Option 2: Device hostname + router DNS <span class="pill">Plain name, router-dependent</span></h2>
-  <p>When the CYD asks the router for an IP address (DHCP), it can include a <strong>hostname</strong>. Many home routers (and most that run OpenWrt, DD-WRT, pfSense, OPNsense, Ubiquiti, or Asus firmware) add those names to their own DNS, so every device on the network can look up <code>cydnet</code>. Some routers only answer for a local suffix such as <code>cydnet.lan</code> or <code>cydnet.home</code>.</p>
-  <h3>What it would take</h3>
-<pre><code>WiFi.setHostname("cydnet");   // must be called before WiFi.begin()
+    <h2 id="dhcp">5. Option 2: Device hostname + router DNS <span class="pill">Plain name, router-dependent</span></h2>
+    <p>When the CYD asks the router for an IP address (DHCP), it can include a <strong>hostname</strong>. Many home
+      routers (and most that run OpenWrt, DD-WRT, pfSense, OPNsense, Ubiquiti, or Asus firmware) add those names to
+      their own DNS, so every device on the network can look up <code>cydnet</code>. Some routers only answer for a
+      local suffix such as <code>cydnet.lan</code> or <code>cydnet.home</code>.</p>
+    <h3>What it would take</h3>
+    <pre><code>WiFi.setHostname("cydnet");   // must be called before WiFi.begin()
 WiFi.begin(ssid, password);</code></pre>
-  <p>Alternatively, many router admin pages let you rename a connected device directly, with no firmware change at all.</p>
-  <h3>How to find out if your router supports it</h3>
-  <ul>
-    <li>Open the router’s admin page and look at the list of connected (DHCP) clients. If you see device names there, the router knows hostnames.</li>
-    <li>From a PC, run <code>nslookup &lt;some-device-name&gt;</code> for a device listed there. If you get its IP back, the router resolves hostnames.</li>
-  </ul>
-  <h3>Pros and cons</h3>
-  <ul>
-    <li><span class="yes">+</span> Plain <code>http://cydnet/</code> on every device, including phones, with no extra hardware.</li>
-    <li><span class="yes">+</span> Follows the CYD if its IP changes.</li>
-    <li><span class="no">−</span> Entirely up to the router; many internet-provider routers ignore hostnames.</li>
-  </ul>
+    <p>Alternatively, many router admin pages let you rename a connected device directly, with no firmware change at
+      all.</p>
+    <h3>How to find out if your router supports it</h3>
+    <ul>
+      <li>Open the router’s admin page and look at the list of connected (DHCP) clients. If you see device names there,
+        the router knows hostnames.</li>
+      <li>From a PC, run <code>nslookup &lt;some-device-name&gt;</code> for a device listed there. If you get its IP
+        back, the router resolves hostnames.</li>
+    </ul>
+    <h3>Pros and cons</h3>
+    <ul>
+      <li><span class="yes">+</span> Plain <code>http://cydnet/</code> on every device, including phones, with no extra
+        hardware.</li>
+      <li><span class="yes">+</span> Follows the CYD if its IP changes.</li>
+      <li><span class="no">−</span> Entirely up to the router; many internet-provider routers ignore hostnames.</li>
+    </ul>
 
-  <h2 id="netbios">6. Option 3: NetBIOS (Windows only) <span class="pill">Plain name on PCs</span></h2>
-  <p>NetBIOS name service is an old Windows networking method that broadcasts “who is CYDNET?” on the local network. The ESP32 Arduino core includes a <code>NetBIOS</code> library:</p>
-<pre><code>#include &lt;NetBIOS.h&gt;
+    <h2 id="netbios">6. Option 3: NetBIOS (Windows only) <span class="pill">Plain name on PCs</span></h2>
+    <p>NetBIOS name service is an old Windows networking method that broadcasts “who is CYDNET?” on the local network.
+      The ESP32 Arduino core includes a <code>NetBIOS</code> library:</p>
+    <pre><code>#include &lt;NetBIOS.h&gt;
 
 NBNS.begin("CYDNET");   // max 15 characters</code></pre>
-  <ul>
-    <li><span class="yes">+</span> Plain <code>http://cydnet/</code> on Windows PCs with no router setup.</li>
-    <li><span class="no">−</span> Phones and Macs don’t use it.</li>
-    <li><span class="no">−</span> Windows is gradually disabling NetBIOS on some networks; treat it as a convenience, not the main method.</li>
-  </ul>
+    <ul>
+      <li><span class="yes">+</span> Plain <code>http://cydnet/</code> on Windows PCs with no router setup.</li>
+      <li><span class="no">−</span> Phones and Macs don’t use it.</li>
+      <li><span class="no">−</span> Windows is gradually disabling NetBIOS on some networks; treat it as a convenience,
+        not the main method.</li>
+    </ul>
 
-  <h2 id="dns">7. Option 4: A local DNS server <span class="pill">Most reliable, needs equipment</span></h2>
-  <p>A DNS server you control holds a record saying <code>cydnet → 192.168.4.27</code>. Every device that uses that server can look the name up. The CYD itself doesn’t need any changes.</p>
-  <h3>Where the DNS server can live</h3>
-  <dl>
-    <dt>Your router (check this first)</dt>
-    <dd>Some routers have a “Local DNS”, “Static DNS”, “DNS host mapping”, or “Hostnames” page where you can add a name and IP. If yours does, this is the simplest form of this option.</dd>
-    <dt>Pi-hole on a Raspberry Pi</dt>
-    <dd>A popular ad-blocking DNS server with a web page under <em>Local DNS → DNS Records</em> for adding <code>cydnet</code>. It needs an always-on Pi.</dd>
-    <dt>dnsmasq or Unbound</dt>
-    <dd>Lightweight DNS servers for Linux. In dnsmasq, a single line does it: <code>address=/cydnet/192.168.4.27</code>.</dd>
-    <dt>Windows Server DNS, or a DNS tool on an always-on PC</dt>
-    <dd>Works, but the PC must stay on or nobody can resolve <em>any</em> name, including internet sites.</dd>
-  </dl>
-  <h3>The important second step</h3>
-  <p>Adding the record isn’t enough: devices must actually <em>use</em> that DNS server. Usually you change the router’s DHCP settings so it hands out the DNS server’s address to every device. If the router itself is the DNS server, this is already true.</p>
-  <div class="note"><strong>Avoid single points of failure.</strong> If the DNS server is a Pi or PC that goes offline, every device on the network loses internet name lookups, not just <code>cydnet</code>. Give the DNS server a reserved IP and a reliable power supply.</div>
-  <h3>Pros and cons</h3>
-  <ul>
-    <li><span class="yes">+</span> Plain <code>http://cydnet/</code> (or any name you like) on every device.</li>
-    <li><span class="yes">+</span> No firmware changes.</li>
-    <li><span class="no">−</span> Needs a router feature or an always-on device.</li>
-    <li><span class="no">−</span> Points at a fixed IP, so the CYD’s IP must be reserved (see below).</li>
-  </ul>
+    <h2 id="dns">7. Option 4: A local DNS server <span class="pill">Most reliable, needs equipment</span></h2>
+    <p>A DNS server you control holds a record saying <code>cydnet → 192.168.4.27</code>. Every device that uses that
+      server can look the name up. The CYD itself doesn’t need any changes.</p>
+    <h3>Where the DNS server can live</h3>
+    <dl>
+      <dt>Your router (check this first)</dt>
+      <dd>Some routers have a “Local DNS”, “Static DNS”, “DNS host mapping”, or “Hostnames” page where you can add a
+        name and IP. If yours does, this is the simplest form of this option.</dd>
+      <dt>Pi-hole on a Raspberry Pi</dt>
+      <dd>A popular ad-blocking DNS server with a web page under <em>Local DNS → DNS Records</em> for adding
+        <code>cydnet</code>. It needs an always-on Pi.</dd>
+      <dt>dnsmasq or Unbound</dt>
+      <dd>Lightweight DNS servers for Linux. In dnsmasq, a single line does it:
+        <code>address=/cydnet/192.168.4.27</code>.</dd>
+      <dt>Windows Server DNS, or a DNS tool on an always-on PC</dt>
+      <dd>Works, but the PC must stay on or nobody can resolve <em>any</em> name, including internet sites.</dd>
+    </dl>
+    <h3>The important second step</h3>
+    <p>Adding the record isn’t enough: devices must actually <em>use</em> that DNS server. Usually you change the
+      router’s DHCP settings so it hands out the DNS server’s address to every device. If the router itself is the DNS
+      server, this is already true.</p>
+    <div class="note"><strong>Avoid single points of failure.</strong> If the DNS server is a Pi or PC that goes
+      offline, every device on the network loses internet name lookups, not just <code>cydnet</code>. Give the DNS
+      server a reserved IP and a reliable power supply.</div>
+    <h3>Pros and cons</h3>
+    <ul>
+      <li><span class="yes">+</span> Plain <code>http://cydnet/</code> (or any name you like) on every device.</li>
+      <li><span class="yes">+</span> No firmware changes.</li>
+      <li><span class="no">−</span> Needs a router feature or an always-on device.</li>
+      <li><span class="no">−</span> Points at a fixed IP, so the CYD’s IP must be reserved (see below).</li>
+    </ul>
 
-  <h2 id="hosts">8. Option 5: The hosts file <span class="pill">Quick test on one PC</span></h2>
-  <p>Every computer has a hosts file that’s checked before DNS. Adding one line makes the name work on that computer only.</p>
-  <ul>
-    <li><strong>Windows:</strong> open Notepad <em>as Administrator</em>, then open <code>C:\Windows\System32\drivers\etc\hosts</code>.</li>
-    <li><strong>Mac/Linux:</strong> <code>sudo nano /etc/hosts</code></li>
-  </ul>
-  <p>Add:</p>
-<pre><code>192.168.4.27    cydnet</code></pre>
-  <p>Good for trying the name out today on your own PC. Not practical for a crew’s phones, since phones don’t let you edit this file.</p>
+    <h2 id="hosts">8. Option 5: The hosts file <span class="pill">Quick test on one PC</span></h2>
+    <p>Every computer has a hosts file that’s checked before DNS. Adding one line makes the name work on that computer
+      only.</p>
+    <ul>
+      <li><strong>Windows:</strong> open Notepad <em>as Administrator</em>, then open
+        <code>C:\Windows\System32\drivers\etc\hosts</code>.</li>
+      <li><strong>Mac/Linux:</strong> <code>sudo nano /etc/hosts</code></li>
+    </ul>
+    <p>Add:</p>
+    <pre><code>192.168.4.27    cydnet</code></pre>
+    <p>Good for trying the name out today on your own PC. Not practical for a crew’s phones, since phones don’t let you
+      edit this file.</p>
 
-  <h2 id="reservation">9. Do this regardless: reserve the IP address</h2>
-  <p>Routers hand out addresses that can change after a restart or power outage. A <strong>DHCP reservation</strong> (also called “static lease” or “address reservation”) tells the router to always give the CYD 192.168.4.27.</p>
-  <ul>
-    <li>Options 4 and 5 <em>require</em> this, because they point at a fixed IP.</li>
-    <li>Options 1–3 follow the CYD automatically, but a reservation still keeps bookmarks to the IP working.</li>
-  </ul>
-  <p>In the router’s admin page, look under DHCP, LAN, or Address Reservation and pick the CYD from the client list (it’s identified by its MAC address).</p>
+    <h2 id="reservation">9. Do this regardless: reserve the IP address</h2>
+    <p>Routers hand out addresses that can change after a restart or power outage. A <strong>DHCP reservation</strong>
+      (also called “static lease” or “address reservation”) tells the router to always give the CYD 192.168.4.27.</p>
+    <ul>
+      <li>Options 4 and 5 <em>require</em> this, because they point at a fixed IP.</li>
+      <li>Options 1–3 follow the CYD automatically, but a reservation still keeps bookmarks to the IP working.</li>
+    </ul>
+    <p>In the router’s admin page, look under DHCP, LAN, or Address Reservation and pick the CYD from the client list
+      (it’s identified by its MAC address).</p>
 
-  <h2 id="pitfalls">10. Things that can get in the way</h2>
-  <div class="table-wrap">
-  <table>
-    <thead><tr><th>Problem</th><th>Affects</th><th>What happens / what to do</th></tr></thead>
-    <tbody>
-      <tr><td>Android “Private DNS”</td><td>Option 4, 2</td><td>The phone uses an internet DNS service instead of your router, so local names fail. Turn it off or set it to Automatic in Settings → Network → Private DNS.</td></tr>
-      <tr><td>iCloud Private Relay / “Limit IP Address Tracking”</td><td>Option 4, 2</td><td>Can bypass local DNS for Safari on iPhone. Usually fine on the home network, but turn it off for that Wi-Fi if names fail.</td></tr>
-      <tr><td>Device set to a public DNS (8.8.8.8, 1.1.1.1)</td><td>Option 4, 2</td><td>Public DNS doesn’t know <code>cydnet</code>. Set the device back to automatic DNS.</td></tr>
-      <tr><td>Guest Wi-Fi or “AP / client isolation”</td><td>All options</td><td>Devices can’t see the CYD at all, by name or IP. Put staff devices on the main network.</td></tr>
-      <tr><td>Browser treats a bare word as a search</td><td>Plain-name options</td><td>Typing just <code>cydnet</code> may open a web search. Type <code>http://cydnet/</code> with the trailing slash once, then bookmark it.</td></tr>
-      <tr><td><code>.local</code> used by an office network</td><td>Option 1</td><td>Some business networks use <code>.local</code> for their own DNS and conflict with mDNS. Rare on small business Wi-Fi.</td></tr>
-      <tr><td>CYD in setup access point mode</td><td>Options 2, 4, 5</td><td>When the CYD can’t join Wi-Fi, it runs its own network at <code>192.168.4.1</code>. Router-based names won’t apply there; use the IP shown on the CYD screen.</td></tr>
-    </tbody>
-  </table>
-  </div>
+    <h2 id="pitfalls">10. Things that can get in the way</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Problem</th>
+            <th>Affects</th>
+            <th>What happens / what to do</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Android “Private DNS”</td>
+            <td>Option 4, 2</td>
+            <td>The phone uses an internet DNS service instead of your router, so local names fail. Turn it off or set
+              it to Automatic in Settings → Network → Private DNS.</td>
+          </tr>
+          <tr>
+            <td>iCloud Private Relay / “Limit IP Address Tracking”</td>
+            <td>Option 4, 2</td>
+            <td>Can bypass local DNS for Safari on iPhone. Usually fine on the home network, but turn it off for that
+              Wi-Fi if names fail.</td>
+          </tr>
+          <tr>
+            <td>Device set to a public DNS (8.8.8.8, 1.1.1.1)</td>
+            <td>Option 4, 2</td>
+            <td>Public DNS doesn’t know <code>cydnet</code>. Set the device back to automatic DNS.</td>
+          </tr>
+          <tr>
+            <td>Guest Wi-Fi or “AP / client isolation”</td>
+            <td>All options</td>
+            <td>Devices can’t see the CYD at all, by name or IP. Put staff devices on the main network.</td>
+          </tr>
+          <tr>
+            <td>Browser treats a bare word as a search</td>
+            <td>Plain-name options</td>
+            <td>Typing just <code>cydnet</code> may open a web search. Type <code>http://cydnet/</code> with the
+              trailing slash once, then bookmark it.</td>
+          </tr>
+          <tr>
+            <td><code>.local</code> used by an office network</td>
+            <td>Option 1</td>
+            <td>Some business networks use <code>.local</code> for their own DNS and conflict with mDNS. Rare on small
+              business Wi-Fi.</td>
+          </tr>
+          <tr>
+            <td>CYD in setup access point mode</td>
+            <td>Options 2, 4, 5</td>
+            <td>When the CYD can’t join Wi-Fi, it runs its own network at <code>192.168.4.1</code>. Router-based names
+              won’t apply there; use the IP shown on the CYD screen.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-  <h2 id="testing">11. How to test a name</h2>
-  <p>From a Windows PowerShell or Command Prompt window:</p>
-<pre><code>ping cydnet            # tries hosts file, DNS, LLMNR, NetBIOS
+    <h2 id="testing">11. How to test a name</h2>
+    <p>From a Windows PowerShell or Command Prompt window:</p>
+    <pre><code>ping cydnet            # tries hosts file, DNS, LLMNR, NetBIOS
 ping cydnet.local      # tries mDNS
 nslookup cydnet        # asks DNS only; shows which DNS server answered
 ipconfig /all          # look for "DNS Servers" to see which server this PC uses
 ipconfig /flushdns     # clear cached lookups after changing a record</code></pre>
-  <p>On a phone, simply open <code>http://cydnet/</code> and <code>http://cydnet.local/</code> in the browser. If you change a DNS record, toggling Wi-Fi off and on clears the phone’s cache.</p>
-  <div class="tip"><code>ping</code> succeeding but <code>nslookup</code> failing means the name was found by mDNS, NetBIOS, or the hosts file, <em>not</em> by DNS — so phones may not see it.</div>
+    <p>On a phone, simply open <code>http://cydnet/</code> and <code>http://cydnet.local/</code> in the browser. If you
+      change a DNS record, toggling Wi-Fi off and on clears the phone’s cache.</p>
+    <div class="tip"><code>ping</code> succeeding but <code>nslookup</code> failing means the name was found by mDNS,
+      NetBIOS, or the hosts file, <em>not</em> by DNS — so phones may not see it.</div>
 
-  <h2 id="recommendation">12. Recommendation for CrewBoard</h2>
-  <div class="card">
-    <ol>
-      <li><strong>Reserve 192.168.4.27</strong> for the CYD in the router.</li>
-      <li><strong>Check the router</strong> for a local DNS / host-mapping page. If it has one, add <code>cydnet → 192.168.4.27</code> and you’re done — no code needed.</li>
-      <li><strong>If not</strong>, a small firmware update would:
-        <ul>
-          <li>add a <code>"hostname": "CYDNet"</code> setting to <code>config.json</code>;</li>
-          <li>set the Wi-Fi hostname, so routers that support Option 2 give everyone <code>http://cydnet/</code>;</li>
-          <li>start mDNS, so <code>http://cydnet.local/</code> works on phones and computers;</li>
-          <li>start NetBIOS, so <code>http://cydnet/</code> works on Windows PCs;</li>
-          <li>show the name on the CYD screen beside the IP address.</li>
-        </ul>
-        About 15 lines, using libraries already included with the ESP32 Arduino core.</li>
-      <li><strong>To try a name today</strong> on your own PC, use the hosts file (Option 5).</li>
-    </ol>
-  </div>
+    <h2 id="recommendation">12. Recommendation for CrewBoard</h2>
+    <div class="card">
+      <ol>
+        <li><strong>Reserve 192.168.4.27</strong> for the CYD in the router.</li>
+        <li><strong>Check the router</strong> for a local DNS / host-mapping page. If it has one, add
+          <code>cydnet → 192.168.4.27</code> and you’re done — no code needed.</li>
+        <li><strong>If not</strong>, a small firmware update would:
+          <ul>
+            <li>add a <code>"hostname": "CYDNet"</code> setting to <code>config.json</code>;</li>
+            <li>set the Wi-Fi hostname, so routers that support Option 2 give everyone <code>http://cydnet/</code>;</li>
+            <li>start mDNS, so <code>http://cydnet.local/</code> works on phones and computers;</li>
+            <li>start NetBIOS, so <code>http://cydnet/</code> works on Windows PCs;</li>
+            <li>show the name on the CYD screen beside the IP address.</li>
+          </ul>
+          About 15 lines, using libraries already included with the ESP32 Arduino core.
+        </li>
+        <li><strong>To try a name today</strong> on your own PC, use the hosts file (Option 5).</li>
+      </ol>
+    </div>
 
-  <h2 id="glossary">13. Glossary</h2>
-  <dl>
-    <dt>DNS (Domain Name System)</dt><dd>The service that turns names into IP addresses.</dd>
-    <dt>DNS record (A record)</dt><dd>One entry in a DNS server mapping a name to an IPv4 address.</dd>
-    <dt>DHCP</dt><dd>How the router hands out IP addresses (and the DNS server to use) to devices that join the network.</dd>
-    <dt>DHCP reservation / static lease</dt><dd>A router setting that always gives a particular device the same IP address.</dd>
-    <dt>Hostname</dt><dd>The name a device calls itself, which it can share with the router.</dd>
-    <dt>mDNS / Bonjour</dt><dd>Devices answering for their own <code>.local</code> names via multicast on the local network.</dd>
-    <dt>NetBIOS name service / LLMNR</dt><dd>Older Windows methods for resolving single-word names by broadcasting on the local network.</dd>
-    <dt>Hosts file</dt><dd>A text file on each computer that overrides DNS for specific names.</dd>
-    <dt>Pi-hole</dt><dd>A DNS server, usually on a Raspberry Pi, with a web interface and local DNS records.</dd>
-    <dt>VLAN / client isolation</dt><dd>Router features that separate devices into groups that can’t see each other.</dd>
-  </dl>
+    <h2 id="glossary">13. Glossary</h2>
+    <dl>
+      <dt>DNS (Domain Name System)</dt>
+      <dd>The service that turns names into IP addresses.</dd>
+      <dt>DNS record (A record)</dt>
+      <dd>One entry in a DNS server mapping a name to an IPv4 address.</dd>
+      <dt>DHCP</dt>
+      <dd>How the router hands out IP addresses (and the DNS server to use) to devices that join the network.</dd>
+      <dt>DHCP reservation / static lease</dt>
+      <dd>A router setting that always gives a particular device the same IP address.</dd>
+      <dt>Hostname</dt>
+      <dd>The name a device calls itself, which it can share with the router.</dd>
+      <dt>mDNS / Bonjour</dt>
+      <dd>Devices answering for their own <code>.local</code> names via multicast on the local network.</dd>
+      <dt>NetBIOS name service / LLMNR</dt>
+      <dd>Older Windows methods for resolving single-word names by broadcasting on the local network.</dd>
+      <dt>Hosts file</dt>
+      <dd>A text file on each computer that overrides DNS for specific names.</dd>
+      <dt>Pi-hole</dt>
+      <dd>A DNS server, usually on a Raspberry Pi, with a web interface and local DNS records.</dd>
+      <dt>VLAN / client isolation</dt>
+      <dd>Router features that separate devices into groups that can’t see each other.</dd>
+    </dl>
 
-  <footer>CrewBoard CYD documentation · Local hostname options</footer>
-</main>
+    <footer>CrewBoard CYD documentation · Local hostname options</footer>
+  </main>
 </body>
+
 </html>
