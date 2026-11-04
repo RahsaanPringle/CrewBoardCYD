@@ -73,6 +73,13 @@ test('serves the exact deployable web assets, Basic auth, sessions, themes and a
   }
 });
 
+test('top navigation links to the repository in a labeled, isolated new tab', () => {
+  const html = fs.readFileSync(path.join(assetRoot, 'www', 'index.html'), 'utf8');
+  const navigation = html.match(/<nav\b[^>]*>[\s\S]*?<\/nav>/)?.[0];
+  assert.ok(navigation);
+  assert.match(navigation, /<a\b[^>]*href="https:\/\/github\.com\/RahsaanPringle\/CrewBoardCYD"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*aria-label="GitHub repository \(opens in a new tab\)">GitHub<\/a>/);
+});
+
 test('persists collections across restarts without changing SD-card samples', async (t) => {
   const f = await fixture(t);
   const source = fs.readFileSync(path.join(assetRoot, 'data', 'roster.json'), 'utf8');
