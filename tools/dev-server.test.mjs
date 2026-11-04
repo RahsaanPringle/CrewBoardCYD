@@ -103,7 +103,7 @@ test('persists collections across restarts without changing SD-card samples', as
 test('shared editor keeps the form in Bootstrap scrollable content and names the dialog', () => {
   const html = fs.readFileSync(path.join(assetRoot, 'www', 'index.html'), 'utf8');
   assert.match(html, /id="record-modal"[^>]*aria-labelledby="record-modal-title"/);
-  assert.match(html, /class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">\s*<form id="record-form" class="modal-content">/);
+  assert.match(html, /class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">\s*<form id="record-form" class="modal-content" autocomplete="off">/);
   assert.match(html, /id="record-modal-title"[^>]*tabindex="-1"/);
   assert.match(html, /<div id="record-fields" class="modal-body"><\/div>\s*<div class="modal-footer">/);
   assert.match(html, /type="button" class="btn-close"[^>]*aria-label="Close"/);
@@ -169,6 +169,78 @@ test('enforces CYD write markers, types, permissions, byte limits and collection
     })).status, 422);
   }
   assert.deepEqual((await f.request(url)).body, original);
+});
+
+test('validates semantic fields for direct API writes', async (t) => {
+  const f = await fixture(t);
+  const put = (collection, data) => f.request('/api/v1/' + collection, { method: 'PUT', data });
+  const roster = (await f.request('/api/v1/roster')).body;
+  for (const birthday of ['02-30', '1900-02-29', '2023-02-29', '0000-01-01', '2-01']) {
+    const records = structuredClone(roster); records[1].birthday = birthday;
+    assert.equal((await put('roster', records)).status, 422, birthday);
+  }
+  for (const email of ['not-an-address', 'a@-example.com', 'a@x..com', 'a b@x', 'a@b@c']) {
+    const records = structuredClone(roster); records[1].email = email;
+    assert.equal((await put('roster', records)).status, 422, email);
+  }
+  const colon = structuredClone(roster); colon[1].username = 'invalid:name';
+  assert.equal((await put('roster', colon)).status, 422);
+  for (const birthday of ['02-29', '2000-02-29', '2024-02-29', '']) {
+    const records = (await f.request('/api/v1/roster')).body;
+    records[1].birthday = birthday;
+    records[1].email = 'A+shift@crew.example';
+    assert.equal((await put('roster', records)).status, 200, birthday);
+    assert.equal((await f.request('/api/v1/roster')).body[1].birthday, birthday);
+  }
+  assert.equal((await f.request('/api/v1/profile', { method: 'PUT', user: f.config.users[0],
+    data: { birthday: '02-30' } })).status, 422);
+  assert.equal((await f.request('/api/v1/profile', { method: 'PUT', user: f.config.users[0],
+    data: { birthday: '02-29', email: 'a@b' } })).status, 200);
+
+  const schedule = (await f.request('/api/v1/schedule')).body;
+  for (const changes of [{ date: '2023-02-29' }, { date: '2026-13-01' }, { startTime: '24:00' },
+    { startTime: '9:00' }, { endTime: '12:60' }, { startTime: '10:00', endTime: '09:00' }]) {
+    const records = structuredClone(schedule); Object.assign(records[0], changes);
+    assert.equal((await put('schedule', records)).status, 422, JSON.stringify(changes));
+  }
+  const optionalEnd = structuredClone(schedule); optionalEnd[0].endTime = '';
+  assert.equal((await put('schedule', optionalEnd)).status, 200);
+  assert.equal((await f.request('/api/v1/schedule')).body[0].endTime, '');
+
+  const post = { title: 'Post', body: 'Message', postedAt: '2026-11-03T19:00' };
+  assert.equal((await f.request('/api/v1/messages', { method: 'POST',
+    data: { ...post, expiresAt: '2023-02-29' } })).status, 422);
+  assert.equal((await f.request('/api/v1/messages', { method: 'POST',
+    data: { ...post, expiresAt: '2024-02-29' } })).status, 201);
+  const messages = (await f.request('/api/v1/messages')).body;
+  messages[0].expiresAt = '2026-13-01';
+  assert.equal((await put('messages', messages)).status, 422);
+});
+
+test('preserves unchanged noncanonical legacy fields while rejecting new invalid values', async (t) => {
+  const f = await fixture(t);
+  const roster = (await f.request('/api/v1/roster')).body;
+  roster[0].birthday = 'legacy'; roster[0].email = 'old@-host';
+  const schedule = (await f.request('/api/v1/schedule')).body;
+  schedule[0].date = '2026/11/02'; schedule[0].startTime = '8:00';
+  const messages = (await f.request('/api/v1/messages')).body;
+  messages[0].expiresAt = 'n/a';
+  for (const [collection, records] of [['roster', roster], ['schedule', schedule], ['messages', messages]]) {
+    fs.writeFileSync(path.join(f.storage, 'data', collection + '.json'), JSON.stringify(records));
+  }
+  await f.restart();
+  for (const [collection, records] of [['roster', roster], ['schedule', schedule], ['messages', messages]]) {
+    assert.equal((await f.request('/api/v1/' + collection, { method: 'PUT', data: records })).status, 200, collection);
+    assert.deepEqual((await f.request('/api/v1/' + collection)).body, records);
+  }
+  const otherEdit = structuredClone(roster); otherEdit[1].phone = '+44 20 1234 5678';
+  assert.equal((await f.request('/api/v1/roster', { method: 'PUT', data: otherEdit })).status, 200);
+  const changedInvalid = structuredClone(otherEdit); changedInvalid[0].birthday = 'bad';
+  assert.equal((await f.request('/api/v1/roster', { method: 'PUT', data: changedInvalid })).status, 422);
+  changedInvalid[0].birthday = '02-29';
+  assert.equal((await f.request('/api/v1/roster', { method: 'PUT', data: changedInvalid })).status, 200);
+  const changedDate = structuredClone(schedule); changedDate[0].date = '2026/12/02';
+  assert.equal((await f.request('/api/v1/schedule', { method: 'PUT', data: changedDate })).status, 422);
 });
 
 test('updates staff logins immediately without exposing passwords and restricts profile edits', async (t) => {

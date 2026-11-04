@@ -91,6 +91,8 @@ The included JSON records are sample data. Replace them through the owner interf
 
 The roster requires only a display name. Business role, phone, email, birthday, emergency contact, notes, username, and password can be added later. Staff passwords are never stored in `roster.json` or returned to the browser; the administrator form updates the protected `users` section of `/config.json`. New credentials take effect immediately without restarting the CYD.
 
+Birthdays may be entered as `MM-DD` or `YYYY-MM-DD`; the year remains optional. Schedule dates use `YYYY-MM-DD`, times use 24-hour `HH:MM`, and an end time cannot precede its start time. Existing noncanonical dates and times are shown for correction rather than silently cleared. See the [form-field inventory](../docs/form-fields.md) for all controls, validation, autofill, and compatibility details.
+
 ### Permissions and features
 
 - **Roster roles** come from a fixed list for a mowing/landscaping business: Owner, Crew Lead, Crew Member, Equipment Operator, and Trainee. The list is defined in `rosterRoles` in `CrewBoard_CYD.ino` and is returned to the browser by `/api/v1/session`. Records with an older role outside the list must be given a listed role (or none) the next time the owner saves the roster.

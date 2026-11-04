@@ -3,6 +3,9 @@
 #include <SD.h>
 #include <TFT_eSPI.h>
 #include <ArduinoJson.h>
+#include <memory>
+#include <new>
+#include "form_validation.h"
 
 // CrewBoard CYD
 // Copy the contents of sd-card/ to a FAT32 microSD card before first boot.
@@ -336,11 +339,54 @@ bool validText(JsonVariantConst value, size_t maximum, bool required = true) {
   return length <= maximum && (!required || length > 0);
 }
 
+bool unchangedLegacyFields(const String& collection, JsonObject record, const char* field, const char* otherField,
+                           std::unique_ptr<DynamicJsonDocument>& previous, String& error) {
+  if (!previous) {
+    const String path = collectionPath(collection);
+    if (!SD.exists(path)) return false;
+    File file = SD.open(path, FILE_READ);
+    if (!file || file.isDirectory()) {
+      if (file) file.close();
+      error = "Could not read the existing collection to verify a legacy value.";
+      return false;
+    }
+    previous.reset(new (std::nothrow) DynamicJsonDocument(jsonDocumentCapacity));
+    if (!previous) {
+      file.close();
+      error = "Not enough memory to verify a legacy value.";
+      return false;
+    }
+    const DeserializationError jsonError = deserializeJson(*previous, file);
+    file.close();
+    if (jsonError || !previous->is<JsonArray>()) {
+      error = "Could not verify a legacy value in the existing collection.";
+      return false;
+    }
+  }
+  const char* id = record["id"] | "";
+  for (JsonObjectConst oldRecord : previous->as<JsonArrayConst>()) {
+    if (strcmp(id, oldRecord["id"] | "") != 0) continue;
+    if (strcmp(record[field] | "", oldRecord[field] | "") != 0) return false;
+    return !otherField || strcmp(record[otherField] | "", oldRecord[otherField] | "") == 0;
+  }
+  return false;
+}
+
+bool validOrPreserved(bool valid, const String& collection, JsonObject record, const char* field,
+                      const char* otherField, const char* message,
+                      std::unique_ptr<DynamicJsonDocument>& previous, String& error) {
+  if (valid || unchangedLegacyFields(collection, record, field, otherField, previous, error)) return true;
+  if (error.isEmpty()) error = message;
+  return false;
+}
+
 bool validateCollection(const String& collection, JsonDocument& document, String& error) {
   if (!document.is<JsonArray>()) { error = "The collection must be a JSON array."; return false; }
   JsonArray array = document.as<JsonArray>();
   if (array.size() > collectionLimit(collection)) { error = "This collection has too many records."; return false; }
 
+  // The existing collection is loaded only if a noncanonical value needs comparison.
+  std::unique_ptr<DynamicJsonDocument> previous;
   for (size_t recordIndex = 0; recordIndex < array.size(); ++recordIndex) {
     JsonObject record = array[recordIndex].as<JsonObject>();
     if (!validText(record["id"], 64)) { error = "Every record needs a short ID."; return false; }
@@ -357,6 +403,15 @@ bool validateCollection(const String& collection, JsonDocument& document, String
           !validText(record["emergencyContactPhone"], 30, false) || !validText(record["notes"], 300, false) ||
           !record["active"].is<bool>()) { error = "A roster record is invalid."; return false; }
       if (!validRole(record["role"])) { error = "Choose a role from the defined role list."; return false; }
+      const char* birthday = record["birthday"] | "";
+      const char* email = record["email"] | "";
+      const char* username = record["username"] | "";
+      if (!validOrPreserved(!birthday[0] || form_validation::date(birthday, true), collection, record, "birthday", nullptr,
+                            "Birthday must be a valid MM-DD or YYYY-MM-DD.", previous, error) ||
+          !validOrPreserved(!email[0] || form_validation::email(email), collection, record, "email", nullptr,
+                            "Enter a valid email address.", previous, error) ||
+          !validOrPreserved(!strchr(username, ':'), collection, record, "username", nullptr,
+                            "A username cannot contain a colon.", previous, error)) return false;
     } else if (collection == "locations") {
       if (!validText(record["name"], 80) || !validText(record["address"], 120) || !validText(record["city"], 60) || !validText(record["region"], 30, false) || !validText(record["postalCode"], 16, false)) { error = "A location record is invalid."; return false; }
       if (!record["latitude"].is<float>() || !record["longitude"].is<float>()) {
@@ -369,12 +424,26 @@ bool validateCollection(const String& collection, JsonDocument& document, String
     } else if (collection == "schedule") {
       if (!validText(record["title"], 80) || !validText(record["date"], 10) || !validText(record["startTime"], 5) || !validText(record["endTime"], 5, false) || !validText(record["locationId"], 64) || !validText(record["notes"], 500, false) || !record["crewIds"].is<JsonArray>()) { error = "A schedule record is invalid."; return false; }
       if (record["crewIds"].as<JsonArray>().size() > maxUserCount) { error = "A job has too many crew assignments."; return false; }
+      const char* date = record["date"] | "";
+      const char* start = record["startTime"] | "";
+      const char* end = record["endTime"] | "";
+      if (!validOrPreserved(form_validation::date(date), collection, record, "date", nullptr,
+                            "Job date must be a valid YYYY-MM-DD.", previous, error) ||
+          !validOrPreserved(form_validation::time(start), collection, record, "startTime", nullptr,
+                            "Start time must use HH:MM.", previous, error) ||
+          !validOrPreserved(!end[0] || form_validation::time(end), collection, record, "endTime", nullptr,
+                            "End time must use HH:MM.", previous, error) ||
+          !validOrPreserved(!end[0] || !form_validation::time(start) || !form_validation::time(end) || strcmp(end, start) >= 0,
+                            collection, record, "startTime", "endTime", "End time cannot be earlier than start time.", previous, error)) return false;
     } else if (collection == "messages") {
       const bool isReply = record["parentId"].is<const char*>() && record["parentId"].as<const char*>()[0];
       if (!validText(record["title"], 80, !isReply) || !validText(record["body"], 1000) || !validText(record["postedAt"], 25) ||
           !validText(record["expiresAt"], 10, false) || !validText(record["author"], 40, false) || !validText(record["parentId"], 64, false)) {
         error = "A message record is invalid."; return false;
       }
+      const char* expiresAt = record["expiresAt"] | "";
+      if (!validOrPreserved(!expiresAt[0] || form_validation::date(expiresAt), collection, record, "expiresAt", nullptr,
+                            "Expiry date must be a valid YYYY-MM-DD.", previous, error)) return false;
     }
   }
   return true;

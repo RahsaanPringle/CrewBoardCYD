@@ -25,6 +25,11 @@ html[data-crew-palette="classic"] {
 html[data-crew-palette="classic"] body { background: #f4f6f5; color: #172421; }
 html[data-crew-palette="classic"] .card { border: 1px solid var(--crew-border); }
 body { min-height: 100vh; }
+#record-modal { height: 100dvh; }
+#record-modal .modal-body { overscroll-behavior-y: contain; }
+#record-modal .modal-header { padding-top: max(var(--bs-modal-header-padding-y), env(safe-area-inset-top)); }
+#record-modal .modal-footer { padding-bottom: max(var(--bs-modal-padding), env(safe-area-inset-bottom)); }
+#record-modal .modal-content { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 .navbar { background: var(--crew-accent); }
 .navbar-brand { letter-spacing: .02em; }
 .app-tabs { gap: .35rem; }

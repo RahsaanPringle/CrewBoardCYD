@@ -11,10 +11,11 @@
   };
   const modal = new bootstrap.Modal(document.getElementById('record-modal'));
   let editing = { kind: '', id: '', parentId: '' };
+  let initialFieldValues = {};
   let editorTrigger = null;
   let editorTriggerMatch = null;
 
-  function escapeHtml(value) { return $('<div>').text(value == null ? '' : String(value)).html(); }
+  function escapeHtml(value) { return $('<div>').text(value == null ? '' : String(value)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
   function makeId(prefix) { return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
   function byId(kind, id) { return state[kind].find((item) => item.id === id); }
   function locationName(id) { const item = byId('locations', id); return item ? item.name : 'Unknown location'; }
@@ -248,21 +249,165 @@
     renderRoster(); renderSchedule(); renderMessages(); renderLocations();
   }
 
-  function field(name, label, type, value, extra) {
-    return '<div class="mb-3"><label class="form-label" for="field-' + name + '">' + label + '</label><input class="form-control" id="field-' + name + '" name="' + name + '" type="' + (type || 'text') + '" value="' + escapeHtml(value == null ? '' : value) + '" ' + (extra || '') + '></div>';
+  function validCalendarDate(value, yearOptional) {
+    const match = /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec(value);
+    if (!match || (!yearOptional && !match[1])) return false;
+    const year = match[1] ? Number(match[1]) : 2000;
+    const month = Number(match[2]); const day = Number(match[3]);
+    if (!year || month < 1 || month > 12) return false;
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return day >= 1 && day <= days[month - 1];
   }
 
-  function contactFields(record) {
-    return '<div class="row"><div class="col-md-6">' + field('phone', 'Phone (optional)', 'tel', record.phone, 'maxlength="30"') + '</div><div class="col-md-6">' + field('email', 'Email (optional)', 'email', record.email, 'maxlength="100"') + '</div></div>' +
-      field('birthday', 'Birthday (optional)', 'text', record.birthday, 'maxlength="10" aria-describedby="birthday-help"') +
-      '<p id="birthday-help" class="form-text">Use MM-DD or YYYY-MM-DD.</p>' +
-      '<div class="row"><div class="col-md-6">' + field('emergencyContactName', 'Emergency contact name (optional)', 'text', record.emergencyContactName, 'maxlength="80"') + '</div><div class="col-md-6">' + field('emergencyContactPhone', 'Emergency contact phone (optional)', 'tel', record.emergencyContactPhone, 'maxlength="30"') + '</div></div>';
+  function validTime(value) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  }
+
+  function field(name, label, type, value, options) {
+    const settings = options || {};
+    const id = 'field-' + name;
+    const original = value == null ? '' : String(value);
+    const legacy = original && ((type === 'date' && !validCalendarDate(original, false)) ||
+      (type === 'time' && !validTime(original)));
+    const help = legacy ? 'This saved value is not a valid ' + (type === 'date' ? 'date. Correct it as YYYY-MM-DD' : 'time. Correct it as HH:MM') + ' or clear it if optional.' : settings.help;
+    const describedBy = [settings.describedBy, help ? id + '-help' : ''].filter(Boolean).join(' ');
+    const attributes = [
+      ['maxlength', settings.maxlength], ['minlength', settings.minlength],
+      ['autocomplete', settings.autocomplete], ['inputmode', legacy ? 'text' : settings.inputmode],
+      ['pattern', legacy ? (type === 'date' ? '[0-9]{4}-[0-9]{2}-[0-9]{2}' : '[0-9]{2}:[0-9]{2}') : settings.pattern],
+      ['min', legacy ? null : settings.min], ['max', legacy ? null : settings.max],
+      ['step', settings.step], ['placeholder', settings.placeholder], ['aria-describedby', describedBy || null],
+      ['data-legacy-format', legacy ? type : null]
+    ].filter((entry) => entry[1] != null).map((entry) => ' ' + entry[0] + '="' + escapeHtml(entry[1]) + '"').join('');
+    const inputValue = type === 'password' ? '' : ' value="' + escapeHtml(original) + '"';
+    const input = '<input class="form-control" id="' + escapeHtml(id) + '" name="' + escapeHtml(name) + '" type="' +
+      (legacy ? 'text' : escapeHtml(type || 'text')) + '"' + inputValue + (settings.required ? ' required' : '') + attributes + '>';
+    const control = settings.signToggle ? '<div class="input-group">' + input +
+      '<button class="btn btn-outline-secondary px-3 toggle-coordinate-sign" type="button" data-target="' + escapeHtml(id) +
+      '" aria-controls="' + escapeHtml(id) + '" aria-label="Change the sign of ' + escapeHtml(label.toLowerCase()) + '">+/-</button></div>' : input;
+    return '<div class="mb-3"><label class="form-label" for="' + escapeHtml(id) + '">' + escapeHtml(label) + '</label>' + control +
+      (help ? '<div id="' + escapeHtml(id) + '-help" class="form-text">' + escapeHtml(help) + '</div>' : '') + '</div>';
+  }
+
+  function contactFields(record, ownProfile) {
+    return '<div class="row"><div class="col-md-6">' + field('phone', 'Phone (optional)', 'tel', record.phone, { maxlength: 30, autocomplete: ownProfile ? 'tel' : 'off' }) + '</div><div class="col-md-6">' + field('email', 'Email (optional)', 'email', record.email, { maxlength: 100, autocomplete: ownProfile ? 'email' : 'off' }) + '</div></div>' +
+      field('birthday', 'Birthday (optional)', 'text', record.birthday, { maxlength: 10, autocomplete: 'off', inputmode: 'text', pattern: '([0-9]{4}-)?[0-9]{2}-[0-9]{2}', help: 'Enter MM-DD or YYYY-MM-DD. The year is optional; for example, 02-29 or 2000-02-29.' }) +
+      '<div class="row"><div class="col-md-6">' + field('emergencyContactName', 'Emergency contact name (optional)', 'text', record.emergencyContactName, { maxlength: 80, autocomplete: 'off' }) + '</div><div class="col-md-6">' + field('emergencyContactPhone', 'Emergency contact phone (optional)', 'tel', record.emergencyContactPhone, { maxlength: 30, autocomplete: 'off' }) + '</div></div>';
   }
 
   function roleSelect(current) {
     const options = roles().map((role) => '<option value="' + escapeHtml(role) + '" ' + (normalizeRole(current) === role ? 'selected' : '') + '>' + escapeHtml(role) + '</option>').join('');
-    const note = current && !roles().includes(current) ? '<div class="form-text text-warning-emphasis">The previous role "' + escapeHtml(current) + '" is not in the defined role list. Choose a replacement.</div>' : '';
-    return '<div class="mb-3"><label class="form-label" for="field-role">Business role</label><select class="form-select" id="field-role" name="role"><option value="">No role</option>' + options + '</select>' + note + '</div>';
+    const note = current && !roles().includes(current) ? '<div id="role-help" class="form-text text-warning-emphasis">The previous role "' + escapeHtml(current) + '" is not in the defined role list. Choose a replacement.</div>' : '';
+    return '<div class="mb-3"><label class="form-label" for="field-role">Business role</label><select class="form-select" id="field-role" name="role"' + (note ? ' aria-describedby="role-help"' : '') + '><option value="">No role</option>' + options + '</select>' + note + '</div>';
+  }
+
+  function showInvalid(control) {
+    const errorId = control.id + '-error';
+    let feedback = document.getElementById(errorId);
+    if (!feedback) {
+      feedback = document.createElement('div');
+      feedback.id = errorId;
+      feedback.className = 'invalid-feedback';
+      if (control.parentElement.classList.contains('input-group')) control.parentElement.appendChild(feedback);
+      else control.insertAdjacentElement('afterend', feedback);
+    }
+    feedback.textContent = control.validationMessage;
+    const descriptions = (control.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    if (!descriptions.includes(errorId)) descriptions.push(errorId);
+    control.setAttribute('aria-describedby', descriptions.join(' '));
+    control.setAttribute('aria-invalid', 'true');
+    control.classList.add('is-invalid');
+  }
+
+  function clearInvalid(control) {
+    const errorId = control.id + '-error';
+    const feedback = document.getElementById(errorId);
+    if (feedback) feedback.remove();
+    const descriptions = (control.getAttribute('aria-describedby') || '').split(/\s+/).filter((id) => id && id !== errorId);
+    if (descriptions.length) control.setAttribute('aria-describedby', descriptions.join(' '));
+    else control.removeAttribute('aria-describedby');
+    control.removeAttribute('aria-invalid');
+    control.classList.remove('is-invalid');
+  }
+
+  function updateFormConstraints() {
+    const form = document.getElementById('record-form');
+    const username = form.querySelector('#field-username');
+    const password = form.querySelector('#field-password');
+    if (username && password) password.required = !!username.value.trim() && !editing.hasAccount;
+    const start = form.querySelector('#field-startTime');
+    const end = form.querySelector('#field-endTime');
+    if (end && end.type === 'time') {
+      if (start && validTime(start.value)) end.min = start.value;
+      else end.removeAttribute('min');
+    }
+    form.querySelectorAll('input, select, textarea').forEach((control) => {
+      let message = '';
+      if (control.required && control.type !== 'password' && control.value && !control.value.trim()) message = 'Enter a value instead of only spaces.';
+      if (control.id === 'field-birthday' && control.value && !validCalendarDate(control.value, true)) {
+        message = 'Enter a valid birthday as MM-DD or YYYY-MM-DD.';
+      }
+      if (control.dataset.legacyFormat && control.value &&
+          !(control.dataset.legacyFormat === 'date' ? validCalendarDate(control.value, false) : validTime(control.value))) {
+        message = 'Correct the saved value using the format in the help text.';
+      }
+      if (control === end && start && validTime(start.value) && validTime(end.value) && end.value < start.value) {
+        message = 'End time cannot be earlier than start time.';
+      }
+      if (control.id === 'field-crewIds' && control.selectedOptions.length > 12) message = 'Choose no more than 12 crew members.';
+      control.setCustomValidity(message);
+      if (control.classList.contains('is-invalid')) {
+        if (control.validity.valid) clearInvalid(control);
+        else showInvalid(control);
+      }
+    });
+  }
+
+  const recordForm = document.getElementById('record-form');
+  recordForm.addEventListener('invalid', (event) => showInvalid(event.target), true);
+  recordForm.addEventListener('input', updateFormConstraints);
+  recordForm.addEventListener('change', updateFormConstraints);
+
+  function controlValue(control) {
+    if (control.type === 'checkbox') return control.checked;
+    if (control.multiple) return Array.from(control.selectedOptions, (option) => option.value);
+    return control.value;
+  }
+
+  function captureInitialValues() {
+    initialFieldValues = {};
+    recordForm.querySelectorAll('input, select, textarea').forEach((control) => {
+      if (control.name) initialFieldValues[control.name] = controlValue(control);
+    });
+  }
+
+  function fieldValue(name, previous, convert) {
+    const control = document.getElementById('field-' + name);
+    if (!control) return undefined;
+    const current = controlValue(control);
+    if (previous && JSON.stringify(current) === JSON.stringify(initialFieldValues[name])) return previous[name];
+    return convert ? convert(current) : current;
+  }
+
+  function assignField(record, name, previous, convert) {
+    const value = fieldValue(name, previous, convert);
+    if (value !== undefined) record[name] = value;
+  }
+
+  function trim(value) { return value.trim(); }
+
+  function toggleCoordinateSign(control) {
+    if (control.validity.badInput) { control.reportValidity(); control.focus(); return; }
+    if (!control.value) {
+      control.setCustomValidity('Enter a coordinate before changing its sign.');
+      control.reportValidity();
+      control.focus();
+      return;
+    }
+    control.value = control.value.startsWith('-') ? control.value.slice(1) : '-' + control.value;
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    control.focus();
   }
 
   function openEditor(kind, id, parentId, trigger) {
@@ -277,25 +422,40 @@
     if (kind === 'roster') {
       title = id ? 'Edit employee' : 'Add employee';
       const account = accountFor(record) || {};
-      fields = field('name', 'Display name', 'text', record.name, 'required maxlength="60"') + roleSelect(record.role) +
-        '<hr><h3 class="h6">Contact details</h3>' + contactFields(record) +
+      editing.hasAccount = !!account.username;
+      fields = field('name', 'Display name', 'text', record.name, { required: true, maxlength: 60, autocomplete: 'off' }) + roleSelect(record.role) +
+        '<hr><h3 class="h6">Contact details</h3>' + contactFields(record, false) +
         '<div class="mb-3"><label class="form-label" for="field-notes">Roster notes (optional)</label><textarea class="form-control" id="field-notes" name="notes" maxlength="300">' + escapeHtml(record.notes || '') + '</textarea></div>' +
-        '<hr><h3 class="h6">CrewBoard login</h3><p id="login-help" class="form-text">Both fields may be left blank. Passwords are stored only in the protected configuration file.</p>' +
-        field('username', 'Username (optional)', 'text', account.username || record.username, 'maxlength="40" autocomplete="off" aria-describedby="login-help"') +
-        field('password', account.username ? 'New password (leave blank to keep current)' : 'Password (required when adding a username)', 'password', '', 'maxlength="100" autocomplete="new-password" aria-describedby="login-help"') +
+        '<hr><h3 class="h6">CrewBoard login</h3><p id="login-help" class="form-text">Both fields may be left blank. A new username needs a password; leave the password blank to keep an existing one. Passwords are stored only in the protected configuration file.</p>' +
+        field('username', 'Username (optional)', 'text', account.username || record.username, { maxlength: 40, autocomplete: 'off', pattern: '[^:]*', describedBy: 'login-help' }) +
+        field('password', account.username ? 'New password (leave blank to keep current)' : 'Password (required when adding a username)', 'password', '', { maxlength: 100, autocomplete: 'new-password', describedBy: 'login-help' }) +
         '<div class="form-check"><input class="form-check-input" id="field-active" name="active" type="checkbox" ' + (record.active !== false ? 'checked' : '') + '><label class="form-check-label" for="field-active">Active employee</label></div>';
     } else if (kind === 'profile') {
       const employee = byId('roster', state.session.employeeId) || {};
       title = 'Edit my details';
-      fields = '<p class="form-text">Only your own contact details can be changed here. Ask the owner to change your name, role, or login.</p>' + contactFields(employee);
+      fields = '<p class="form-text">Only your own contact details can be changed here. Ask the owner to change your name, role, or login.</p>' + contactFields(employee, true);
     } else if (kind === 'locations') {
       title = id ? 'Edit location' : 'Add location';
-      fields = field('name', 'Location name', 'text', record.name, 'required maxlength="80"') + field('address', 'Street address', 'text', record.address, 'required maxlength="120"') + '<div class="row"><div class="col-md-6">' + field('city', 'City', 'text', record.city, 'required maxlength="60"') + '</div><div class="col-md-3">' + field('region', 'State/region', 'text', record.region, 'maxlength="30"') + '</div><div class="col-md-3">' + field('postalCode', 'Postal code', 'text', record.postalCode, 'maxlength="16"') + '</div></div><div class="row"><div class="col-md-6">' + field('latitude', 'Latitude', 'number', record.latitude, 'required step="any" min="-90" max="90"') + '</div><div class="col-md-6">' + field('longitude', 'Longitude', 'number', record.longitude, 'required step="any" min="-180" max="180"') + '</div></div><p class="form-text">Coordinates are required so the job site can be pinned on the map. Business job sites only.</p>';
+      fields = field('name', 'Location name', 'text', record.name, { required: true, maxlength: 80 }) +
+        field('address', 'Street address', 'text', record.address, { required: true, maxlength: 120, autocomplete: 'section-jobsite street-address' }) +
+        '<div class="row"><div class="col-md-6">' + field('city', 'City', 'text', record.city, { required: true, maxlength: 60, autocomplete: 'section-jobsite address-level2' }) +
+        '</div><div class="col-md-3">' + field('region', 'State/region', 'text', record.region, { maxlength: 30, autocomplete: 'section-jobsite address-level1' }) +
+        '</div><div class="col-md-3">' + field('postalCode', 'Postal code', 'text', record.postalCode, { maxlength: 16, autocomplete: 'section-jobsite postal-code' }) +
+        '</div></div><div class="row"><div class="col-md-6">' + field('latitude', 'Latitude', 'number', record.latitude, { required: true, step: 'any', min: -90, max: 90, inputmode: 'decimal', describedBy: 'coordinates-help', signToggle: true }) +
+        '</div><div class="col-md-6">' + field('longitude', 'Longitude', 'number', record.longitude, { required: true, step: 'any', min: -180, max: 180, inputmode: 'decimal', describedBy: 'coordinates-help', signToggle: true }) +
+        '</div></div><p id="coordinates-help" class="form-text">Enter decimal degrees for business job sites. Use negative values for south or west; after entering a value, use +/- to change its sign if your keyboard has no minus key.</p>';
     } else if (kind === 'schedule') {
       title = id ? 'Edit job' : 'Add job';
       const locations = state.locations.map((item) => '<option value="' + escapeHtml(item.id) + '" ' + (record.locationId === item.id ? 'selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
       const crew = state.roster.filter((item) => item.active || (record.crewIds || []).includes(item.id)).map((item) => '<option value="' + escapeHtml(item.id) + '" ' + ((record.crewIds || []).includes(item.id) ? 'selected' : '') + '>' + escapeHtml(item.name) + (item.role ? ' — ' + escapeHtml(item.role) : '') + '</option>').join('');
-      fields = field('title', 'Job title', 'text', record.title, 'required maxlength="80"') + '<div class="row"><div class="col-md-4">' + field('date', 'Date', 'date', record.date || (state.scheduleView === 'calendar' ? state.selectedDay : ''), 'required') + '</div><div class="col-md-4">' + field('startTime', 'Start time', 'time', record.startTime, 'required') + '</div><div class="col-md-4">' + field('endTime', 'End time', 'time', record.endTime, '') + '</div></div><div class="mb-3"><label class="form-label" for="field-locationId">Business location</label><select class="form-select" id="field-locationId" name="locationId" required><option value="">Choose a location</option>' + locations + '</select></div><div class="mb-3"><label class="form-label" for="field-crewIds">Assigned crew</label><select class="form-select" id="field-crewIds" name="crewIds" multiple size="5">' + crew + '</select><div class="form-text">Use Ctrl or Command to choose more than one person.</div></div><div class="mb-3"><label class="form-label" for="field-notes">Practical job notes</label><textarea class="form-control" id="field-notes" name="notes" maxlength="500">' + escapeHtml(record.notes || '') + '</textarea></div>';
+      fields = field('title', 'Job title', 'text', record.title, { required: true, maxlength: 80 }) +
+        '<div class="row"><div class="col-md-4">' + field('date', 'Date', 'date', record.date || (state.scheduleView === 'calendar' ? state.selectedDay : ''), { required: true, min: '0001-01-01', max: '9999-12-31' }) +
+        '</div><div class="col-md-4">' + field('startTime', 'Start time', 'time', record.startTime, { required: true, step: 60 }) +
+        '</div><div class="col-md-4">' + field('endTime', 'End time (optional)', 'time', record.endTime, { step: 60, help: 'End time cannot be earlier than start time.' }) +
+        '</div></div><div class="mb-3"><label class="form-label" for="field-locationId">Business location</label><select class="form-select" id="field-locationId" name="locationId" required><option value="">Choose a location</option>' + locations +
+        '</select></div><div class="mb-3"><label class="form-label" for="field-crewIds">Assigned crew (optional)</label><select class="form-select" id="field-crewIds" name="crewIds" multiple size="5" aria-describedby="crew-help">' + crew +
+        '</select><div id="crew-help" class="form-text">Choose up to 12 people. On a computer, use Ctrl or Command to select more than one; on a phone, use the selection picker.</div></div>' +
+        '<div class="mb-3"><label class="form-label" for="field-notes">Practical job notes (optional)</label><textarea class="form-control" id="field-notes" name="notes" maxlength="500">' + escapeHtml(record.notes || '') + '</textarea></div>';
     } else if (kind === 'reply') {
       const parent = byId('messages', parentId) || {};
       title = 'Reply to ' + (parent.author || 'message');
@@ -304,13 +464,15 @@
       const isReply = !!record.parentId;
       title = id ? 'Edit message' : 'New message';
       fields = (id ? '<p class="form-text">Posted by <strong>' + escapeHtml(record.author || 'Unknown user') + '</strong>.</p>' : '<p class="form-text">Posting as <strong>' + escapeHtml(state.session.username) + '</strong>.</p>') +
-        (isReply ? '' : field('title', 'Title', 'text', record.title, 'required maxlength="80"')) +
+        (isReply ? '' : field('title', 'Title', 'text', record.title, { required: true, maxlength: 80 })) +
         '<div class="mb-3"><label class="form-label" for="field-body">Message</label><textarea class="form-control" id="field-body" name="body" required maxlength="1000">' + escapeHtml(record.body || '') + '</textarea></div>' +
-        (isAdmin() && !isReply ? field('expiresAt', 'Expiry date (optional)', 'date', record.expiresAt, '') : '');
+        (isAdmin() && !isReply ? field('expiresAt', 'Expiry date (optional)', 'date', record.expiresAt, { min: '0001-01-01', max: '9999-12-31' }) : '');
     }
     $('#record-modal-title').text(title);
     $('#record-form').removeClass('was-validated');
     $('#record-fields').html(fields).scrollTop(0);
+    captureInitialValues();
+    updateFormConstraints();
     modal.show();
   }
 
@@ -333,20 +495,38 @@
     editorTriggerMatch = null;
   });
 
-  function contactValues() {
-    return { phone: $('#field-phone').val().trim(), email: $('#field-email').val().trim(), birthday: $('#field-birthday').val().trim(), emergencyContactName: $('#field-emergencyContactName').val().trim(), emergencyContactPhone: $('#field-emergencyContactPhone').val().trim() };
+  function contactValues(previous) {
+    const contact = {};
+    ['phone', 'email', 'birthday', 'emergencyContactName', 'emergencyContactPhone'].forEach((name) =>
+      assignField(contact, name, previous, trim));
+    return contact;
   }
 
   function formRecord() {
     const kind = editing.kind;
     const id = editing.id || makeId(kind === 'schedule' ? 'job' : kind === 'locations' ? 'loc' : 'emp');
-    if (kind === 'roster') return $.extend({ id: id, name: $('#field-name').val().trim(), role: $('#field-role').val(), username: $('#field-username').val().trim(), notes: $('#field-notes').val().trim(), active: $('#field-active').prop('checked'), _password: $('#field-password').val() }, contactValues());
-    if (kind === 'locations') return { id: id, name: $('#field-name').val().trim(), address: $('#field-address').val().trim(), city: $('#field-city').val().trim(), region: $('#field-region').val().trim(), postalCode: $('#field-postalCode').val().trim(), latitude: Number($('#field-latitude').val()), longitude: Number($('#field-longitude').val()) };
-    return { id: id, title: $('#field-title').val().trim(), date: $('#field-date').val(), startTime: $('#field-startTime').val(), endTime: $('#field-endTime').val(), locationId: $('#field-locationId').val(), crewIds: $('#field-crewIds').val() || [], notes: $('#field-notes').val().trim() };
+    const previous = editing.id ? byId(kind, editing.id) : null;
+    const record = $.extend({}, previous || {}, { id: id });
+    if (kind === 'roster') {
+      ['name', 'username', 'notes'].forEach((name) => assignField(record, name, previous, trim));
+      ['role', 'active'].forEach((name) => assignField(record, name, previous));
+      return $.extend(record, contactValues(previous), {
+        _accountUsername: $('#field-username').val().trim(), _password: $('#field-password').val()
+      });
+    }
+    if (kind === 'locations') {
+      ['name', 'address', 'city', 'region', 'postalCode'].forEach((name) => assignField(record, name, previous, trim));
+      ['latitude', 'longitude'].forEach((name) => assignField(record, name, previous, Number));
+      return record;
+    }
+    ['title', 'notes'].forEach((name) => assignField(record, name, previous, trim));
+    ['date', 'startTime', 'endTime', 'locationId', 'crewIds'].forEach((name) => assignField(record, name, previous));
+    return record;
   }
 
   function saveCollection(kind, collection) {
-    if (kind === 'roster') collection = collection.map((employee) => $.extend({}, employee, { role: normalizeRole(employee.role) }));
+    if (kind === 'roster') collection = collection.map((employee) => employee.role && !roles().includes(employee.role)
+      ? $.extend({}, employee, { role: normalizeRole(employee.role) }) : employee);
     return api(kind, { method: 'PUT', data: collection }).done(() => { state[kind] = collection; renderAll(); }).fail((xhr) => apiError(xhr, 'Could not save changes.'));
   }
 
@@ -368,23 +548,22 @@
   }
 
   function submitMessage() {
-    const body = $('#field-body').val().trim();
     if (editing.kind === 'reply' || !editing.id) {
-      const data = { parentId: editing.parentId, title: editing.kind === 'reply' ? '' : $('#field-title').val().trim(), body: body, postedAt: localTimestamp(), expiresAt: $('#field-expiresAt').val() || '' };
+      const data = { parentId: editing.parentId, title: editing.kind === 'reply' ? '' : fieldValue('title', null, trim), body: fieldValue('body', null, trim), postedAt: localTimestamp(), expiresAt: fieldValue('expiresAt', null) || '' };
       return api('messages', { method: 'POST', data: data }).done(() => { modal.hide(); reloadMessages(); }).fail((xhr) => apiError(xhr, 'Could not post the message.'));
     }
     // Owner edits re-read the board first so replies posted meanwhile are kept.
     return api('messages').done((latest) => {
       const record = latest.find((item) => item.id === editing.id);
       if (!record) { showAlert('That message was deleted.'); modal.hide(); reloadMessages(); return; }
-      record.body = body;
-      if (!record.parentId) { record.title = $('#field-title').val().trim(); record.expiresAt = $('#field-expiresAt').val() || ''; }
+      assignField(record, 'body', record, trim);
+      if (!record.parentId) { assignField(record, 'title', record, trim); assignField(record, 'expiresAt', record); }
       api('messages', { method: 'PUT', data: latest }).done(() => { state.messages = latest; renderMessages(); modal.hide(); }).fail((xhr) => apiError(xhr, 'Could not save the message.'));
     }).fail((xhr) => apiError(xhr, 'Could not load messages.'));
   }
 
   function submitProfile() {
-    return api('profile', { method: 'PUT', data: contactValues() }).done(() => {
+    return api('profile', { method: 'PUT', data: contactValues(byId('roster', state.session.employeeId)) }).done(() => {
       modal.hide();
       api('roster').done((roster) => { state.roster = roster; renderAll(); });
     }).fail((xhr) => apiError(xhr, 'Could not save your details.'));
@@ -414,6 +593,9 @@
   $(document).on('click', '.reply-message', function () { openEditor('reply', '', $(this).data('id'), this); });
   $(document).on('click', '.edit-message', function () { openEditor('messages', $(this).data('id'), '', this); });
   $(document).on('click', '.delete-message', function () { deleteMessage($(this).data('id')); });
+  $(document).on('click', '.toggle-coordinate-sign', function () {
+    toggleCoordinateSign(document.getElementById(this.dataset.target));
+  });
   $(document).on('click', '.schedule-view', function () { state.scheduleView = $(this).data('view'); renderSchedule(); });
   $(document).on('click', '.calendar-day[data-date]', function () { state.selectedDay = $(this).data('date'); renderCalendar(); });
   $(document).on('click', '.calendar-nav', function () {
@@ -454,13 +636,15 @@
     if (editing.kind === 'profile') { submitProfile(); return; }
     const record = formRecord(); const collection = state[editing.kind].slice();
     const password = record._password || '';
+    const accountUsername = record._accountUsername || '';
     delete record._password;
+    delete record._accountUsername;
     const previousRecord = editing.id ? byId(editing.kind, editing.id) : null;
     const index = collection.findIndex((item) => item.id === record.id);
     if (index >= 0) collection[index] = record; else collection.push(record);
     saveCollection(editing.kind, collection).done(() => {
       if (editing.kind === 'roster') {
-        saveRosterAccount(record, (previousRecord && previousRecord.username) || '', password).done(() => modal.hide());
+        saveRosterAccount($.extend({}, record, { username: accountUsername }), (previousRecord && previousRecord.username) || '', password).done(() => modal.hide());
       } else {
         modal.hide();
       }
@@ -482,8 +666,9 @@
         .concat(files.map((file) => [file, themeLabel(file)]));
       picker.html(options.map((option) => '<option value="' + escapeHtml(option[0]) + '">' + escapeHtml(option[1]) + '</option>').join(''));
       const stored = theme.stored();
-      picker.val(options.some((option) => option[0] === stored) ? stored : '').removeClass('d-none');
-    }).fail(() => picker.addClass('d-none'));
+      picker.val(options.some((option) => option[0] === stored) ? stored : '');
+      $('#theme-control').removeClass('d-none').addClass('d-flex');
+    }).fail(() => $('#theme-control').removeClass('d-flex').addClass('d-none'));
   }
 
   $('#theme-picker').on('change', function () {
