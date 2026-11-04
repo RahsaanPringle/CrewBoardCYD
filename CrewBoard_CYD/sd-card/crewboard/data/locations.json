@@ -1,0 +1,22 @@
+[
+  {
+    "id": "loc-shop",
+    "name": "Sample Shop",
+    "address": "100 Business Road",
+    "city": "Exampletown",
+    "region": "NY",
+    "postalCode": "10001",
+    "latitude": 40.7505,
+    "longitude": -73.9934
+  },
+  {
+    "id": "loc-client-1",
+    "name": "Sample Job Site",
+    "address": "250 Market Street",
+    "city": "Exampletown",
+    "region": "NY",
+    "postalCode": "10002",
+    "latitude": 40.7188,
+    "longitude": -73.9882
+  }
+]

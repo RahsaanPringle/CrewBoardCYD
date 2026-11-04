@@ -1,0 +1,134 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+nav.site-navigation {
+  background: #184c46;
+  color: #fff;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: .75rem 1.25rem;
+  font: 600 .95rem/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.site-navigation ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.site-navigation li {
+  margin: 0;
+}
+
+.site-navigation a {
+  display: block;
+  padding: .6rem .8rem;
+  border: 1px solid transparent;
+  border-radius: .35rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.site-navigation a:hover {
+  text-decoration: underline;
+}
+
+.site-navigation a[aria-current="page"] {
+  background: #dceee8;
+  color: #184c46;
+  border-color: currentColor;
+  text-decoration: underline;
+}
+
+.site-navigation a:focus-visible {
+  outline: 3px solid #efc566;
+  outline-offset: 2px;
+}
+
+:where(.guide-page) {
+  background: #f4f6f5;
+  color: #172421;
+}
+
+:where(.guide-page) header {
+  background: var(--green);
+  color: #fff;
+  padding: 2rem 1.25rem;
+}
+
+:where(.guide-page) main {
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+:where(.guide-page) h2 {
+  color: var(--green);
+  margin-top: 2.5rem;
+  border-bottom: 2px solid var(--mint);
+}
+
+:where(.guide-page) a {
+  color: var(--green);
+}
+
+:where(.guide-page) table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+:where(.guide-page) th,
+:where(.guide-page) td {
+  text-align: left;
+  vertical-align: top;
+}
+
+:where(.guide-page) th {
+  background: var(--mint);
+}
+
+:where(.guide-page) pre {
+  padding: 1rem;
+  border-radius: .5rem;
+  overflow-x: auto;
+}
+
+:where(.guide-page) pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+:focus-visible {
+  outline: 3px solid #ad5800;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  @media print {
+    nav.site-navigation {
+      display: none;
+    }
+  }
+}

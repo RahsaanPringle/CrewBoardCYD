@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#153d35">
+  <meta name="description"
+    content="Meet the CrewBoard Server: a compact, on-site file server for your team's local network.">
+  <link rel="icon" href="data:,">
+  <title>CrewBoard Server — your crew's files, close to home</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../SiteAssets/css/site.css">
+  <link rel="stylesheet" href="../SiteAssets/css/crewboard-server.css">
+  <script src="../SiteAssets/js/site.js" defer></script>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg site-nav sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="#top">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span>CrewBoard <span class="brand-light">Server</span></span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#site-navigation"
+        aria-controls="site-navigation" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="site-navigation">
+        <div class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+          <a class="nav-link" href="#features">Features</a>
+          <a class="nav-link" href="#how-it-works">How it works</a>
+          <a class="nav-link" href="#crewboard-app">CrewBoard app</a>
+          <a class="btn btn-sm btn-dark-green ms-lg-2" href="#get-started">Explore the setup <span
+              aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <section class="hero-section">
+      <div class="container">
+        <div class="row align-items-center gy-5">
+          <div class="col-lg-6 hero-copy">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> A little server for the work you do</p>
+            <h1>Your crew’s files.<br><span>Close to home.</span></h1>
+            <p class="hero-lede">A compact, on-site file server that gives your team a straightforward place to share
+              and manage work files over Wi-Fi.</p>
+            <div class="d-flex flex-wrap gap-3 align-items-center mt-4">
+              <a class="btn btn-dark-green btn-lg" href="#how-it-works">See how it works <span
+                  aria-hidden="true">↓</span></a>
+              <span class="hero-note">Local network. Familiar tools. No cloud account required.</span>
+            </div>
+            <div class="hero-proof d-flex flex-wrap gap-4 mt-5">
+              <div><strong>On site</strong><span>Files on a local card</span></div>
+              <div><strong>WebDAV</strong><span>Use compatible clients</span></div>
+              <div><strong>At a glance</strong><span>Status on the display</span></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="device-scene" role="img" aria-label="Illustration of the server status display">
+              <div class="scene-orbit orbit-one"></div>
+              <div class="scene-orbit orbit-two"></div>
+              <div class="scene-label label-top"><span class="status-pulse"></span> YOUR LOCAL NETWORK</div>
+              <div class="device-shell">
+                <div class="device-bezel">
+                  <div class="device-screen">
+                    <div class="screen-topline"><span>CREWBOARD / SERVER</span><span class="screen-live"><i></i>
+                        ONLINE</span></div>
+                    <div class="screen-title">Intranet server</div>
+                    <div class="screen-divider"></div>
+                    <div class="screen-detail"><span>IP</span><strong>YOUR SERVER IP</strong></div>
+                    <div class="screen-detail"><span>WI-FI</span><strong>YOUR NETWORK</strong></div>
+                    <div class="screen-divider"></div>
+                    <div class="screen-event"><span>●</span> Server ready</div>
+                    <div class="screen-event"><span>●</span> SD card mounted</div>
+                  </div>
+                </div>
+                <div class="device-side"><span></span><span></span><span></span></div>
+                <div class="device-corner"></div>
+              </div>
+              <div class="scene-label label-bottom"><span class="label-icon">↔</span> FILES STAY ON YOUR DEVICE</div>
+              <div class="scene-decoration decoration-a"></div>
+              <div class="scene-decoration decoration-b"></div>
+            </div>
+            <p class="device-caption">Illustrative status screen · actual network details appear on the device</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="intro-strip" aria-label="Product summary">
+      <div class="container">
+        <div class="row g-4 align-items-center">
+          <div class="col-md-4"><span class="strip-number">01</span><span>Keep shared files on site</span></div>
+          <div class="col-md-4"><span class="strip-number">02</span><span>Connect over your Wi-Fi</span></div>
+          <div class="col-md-4"><span class="strip-number">03</span><span>Use a browser or WebDAV client</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section-pad features-section">
+      <div class="container">
+        <div class="section-heading row align-items-end gy-3">
+          <div class="col-lg-7">
+            <p class="eyebrow">Small footprint, useful basics</p>
+            <h2>A practical place<br>for your team’s files.</h2>
+          </div>
+          <div class="col-lg-5">
+            <p class="section-intro">The CrewBoard Server is built around the essentials: local storage, individual
+              sign-ins, and simple ways to reach your files.</p>
+          </div>
+        </div>
+        <div class="filter-bar d-flex flex-wrap align-items-center gap-2" role="group"
+          aria-label="Filter server features">
+          <span class="filter-label me-2">Explore features</span>
+          <button class="filter-button is-active" type="button" data-filter="*" aria-pressed="true">Everything</button>
+          <button class="filter-button" type="button" data-filter=".filter-storage"
+            aria-pressed="false">Storage</button>
+          <button class="filter-button" type="button" data-filter=".filter-access" aria-pressed="false">Access</button>
+          <button class="filter-button" type="button" data-filter=".filter-network"
+            aria-pressed="false">Network</button>
+          <button class="filter-button" type="button" data-filter=".filter-status" aria-pressed="false">On-device
+            status</button>
+        </div>
+
+        <div class="row g-3 feature-grid">
+          <article class="col-md-6 col-xl-3 feature-card filter-storage">
+            <div class="feature-card-inner">
+              <div class="feature-icon icon-storage" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none">
+                  <path
+                    d="M10 12.5A3.5 3.5 0 0 1 13.5 9h21A3.5 3.5 0 0 1 38 12.5v23a3.5 3.5 0 0 1-3.5 3.5h-21a3.5 3.5 0 0 1-3.5-3.5v-23Z"
+                    stroke="currentColor" stroke-width="2" />
+                  <path d="M10 17h28M17 11.5v3m7-3v3m7-3v3m-14 8h14m-14 6h14m-14 6h8" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" />
+                </svg></div>
+              <span class="feature-kicker">01 / STORAGE</span>
+              <h3>Files stay on site.</h3>
+              <p>Files live on the server’s SD card, ready for your team on the local network.</p>
+              <span class="feature-foot">SD-card storage</span>
+            </div>
+          </article>
+          <article class="col-md-6 col-xl-3 feature-card filter-access">
+            <div class="feature-card-inner">
+              <div class="feature-icon icon-access" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none">
+                  <path d="M24 7 38 13v10c0 9-5.8 15.1-14 18-8.2-2.9-14-9-14-18V13l14-6Z" stroke="currentColor"
+                    stroke-width="2" />
+                  <path d="M18 23v-3a6 6 0 1 1 12 0v3m-13 0h14v10H17V23Z" stroke="currentColor" stroke-width="2"
+                    stroke-linejoin="round" />
+                  <circle cx="24" cy="28" r="1.5" fill="currentColor" />
+                </svg></div>
+              <span class="feature-kicker">02 / ACCESS</span>
+              <h3>A login for each person.</h3>
+              <p>Password-protected access for an administrator and up to 12 staff accounts.</p>
+              <span class="feature-foot">Accounts set up on the SD card</span>
+            </div>
+          </article>
+          <article class="col-md-6 col-xl-3 feature-card filter-network">
+            <div class="feature-card-inner">
+              <div class="feature-icon icon-network" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none">
+                  <path d="M8 18a24 24 0 0 1 32 0M14 25a15 15 0 0 1 20 0m-14 7a5 5 0 0 1 8 0" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" />
+                  <circle cx="24" cy="38" r="2" fill="currentColor" />
+                </svg></div>
+              <span class="feature-kicker">03 / NETWORK</span>
+              <h3>Reach it your way.</h3>
+              <p>Browse files in a web browser or connect a compatible WebDAV client over Wi-Fi.</p>
+              <span class="feature-foot">HTTP + WebDAV</span>
+            </div>
+          </article>
+          <article class="col-md-6 col-xl-3 feature-card filter-status">
+            <div class="feature-card-inner">
+              <div class="feature-icon icon-status" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none">
+                  <rect x="7" y="10" width="34" height="25" rx="3" stroke="currentColor" stroke-width="2" />
+                  <path d="M16 41h16m-8-6v6M13 18h6m-6 6h13m-13 6h8m10-11 2 2 4-5" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg></div>
+              <span class="feature-kicker">04 / STATUS</span>
+              <h3>See what’s happening.</h3>
+              <p>The built-in color display shows the network address, Wi-Fi name, and recent server events.</p>
+              <span class="feature-foot">Status at a glance</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section-pad setup-section">
+      <div class="container">
+        <div class="row align-items-center gy-5">
+          <div class="col-lg-5">
+            <p class="eyebrow">No complicated setup</p>
+            <h2>One small server.<br>Your local network.</h2>
+            <p class="section-intro mt-3">The device joins your Wi-Fi and serves files from its SD card. Your team
+              connects from a browser or a WebDAV-compatible file manager.</p>
+            <ol class="setup-steps list-unstyled mt-4">
+              <li><span>1</span>
+                <div><strong>Add your network details</strong>
+                  <p>Set up Wi-Fi and account details in the SD card’s configuration file.</p>
+                </div>
+              </li>
+              <li><span>2</span>
+                <div><strong>Connect the server</strong>
+                  <p>Power it on. The display shows its network address and connection status.</p>
+                </div>
+              </li>
+              <li><span>3</span>
+                <div><strong>Share files with your crew</strong>
+                  <p>Sign in from a browser or connect a compatible WebDAV client.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+          <div class="col-lg-7">
+            <div class="diagram-card">
+              <div class="diagram-header"><span>THE CREWBOARD SERVER</span><span class="diagram-live"><i></i> LOCAL
+                  SETUP</span></div>
+              <div class="mermaid"
+                aria-label="Diagram showing team devices connecting over Wi-Fi to the CrewBoard server and its SD card storage">
+                flowchart LR
+                crew["Your crew"] -->|Browser or WebDAV| wifi["Your Wi-Fi"]
+                wifi -->|Local connection| server["CrewBoard Server"]
+                server --> sd[("SD card files")]
+                server -.-> display["Status display"]
+                classDef people fill:#f8f6ef,stroke:#d9d4c6,color:#263b32
+                classDef network fill:#e7eee5,stroke:#adc2ae,color:#263b32
+                classDef device fill:#153d35,stroke:#153d35,color:#fff
+                classDef storage fill:#f2d795,stroke:#dcb85f,color:#263b32
+                class crew people
+                class wifi network
+                class server device
+                class sd storage
+                class display network
+              </div>
+              <div class="diagram-foot"><span>01</span> Your files move across your local network—not through a cloud
+                service.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="crewboard-app" class="section-pad app-section">
+      <div class="container">
+        <div class="app-note row align-items-center gy-4">
+          <div class="col-lg-7">
+            <p class="eyebrow">Two tools. Different jobs.</p>
+            <h2>CrewBoard keeps<br>the day moving.</h2>
+            <p class="section-intro">The CrewBoard web app helps coordinate schedules, messages, a team roster, and
+              business locations. It is a separate application—not software hosted by this file server.</p>
+          </div>
+          <div class="col-lg-5">
+            <div class="app-preview" aria-label="CrewBoard app sections">
+              <div class="preview-top"><span class="preview-logo">C</span><span>YOUR WORKSPACE</span><span
+                  class="preview-dot"></span></div>
+              <div class="preview-title">Team coordination</div>
+              <div class="preview-row"><span class="preview-icon">▦</span><span>Schedule</span><span
+                  class="preview-count">04</span></div>
+              <div class="preview-row"><span class="preview-icon">◉</span><span>Messages</span><span
+                  class="preview-count">02</span></div>
+              <div class="preview-row"><span class="preview-icon">♙</span><span>Roster</span><span
+                  class="preview-count">12</span></div>
+              <div class="preview-row"><span class="preview-icon">⌖</span><span>Locations</span><span
+                  class="preview-count">03</span></div>
+              <div class="preview-foot"><span></span> TEAM COORDINATION</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="get-started" class="details-section">
+      <div class="container">
+        <div class="details-card row align-items-center gy-4">
+          <div class="col-lg-8">
+            <p class="eyebrow">A simple setup for a hands-on business</p>
+            <h2>Keep your team’s files<br>within reach.</h2>
+            <p>Runs on ESP32 CYD display hardware, with Wi-Fi and an SD card for storage. Bring your own network and SD
+              card.</p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a class="btn btn-light btn-lg" href="#features">Explore the features <span aria-hidden="true">↑</span></a>
+            <p class="availability-note">Pricing and availability details coming soon.</p>
+          </div>
+        </div>
+        <div class="fine-print"><span>CREWBOARD SERVER</span><span>A small, local file server for your crew.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span>© <span id="current-year"></span> CrewBoard</span>
+      <span>Made for teams that keep things moving.</span>
+    </div>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/isotope-layout@3.0.6/dist/isotope.pkgd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script src="../SiteAssets/js/crewboard-server.js"></script>
+</body>
+
+</html>

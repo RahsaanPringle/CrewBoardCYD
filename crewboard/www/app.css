@@ -1,0 +1,66 @@
+/* Custom themes drive these through Bootstrap variables; the classic palette below restores the original CrewBoard look. */
+:root {
+  --crew-accent: var(--bs-primary);
+  --crew-accent-contrast: #fff;
+  --crew-accent-soft: rgba(var(--bs-primary-rgb), .2);
+  --crew-accent-soft-text: var(--bs-body-color);
+  --crew-highlight: var(--bs-warning);
+  --crew-surface: var(--bs-body-bg);
+  --crew-surface-muted: var(--bs-tertiary-bg);
+  --crew-border: var(--bs-border-color);
+  --crew-border-strong: var(--bs-border-color);
+  --crew-muted: var(--bs-secondary-color);
+}
+html[data-crew-palette="classic"] {
+  --crew-accent: #184c46;
+  --crew-accent-soft: #dceee8;
+  --crew-accent-soft-text: #184c46;
+  --crew-highlight: #e0a52c;
+  --crew-surface: #fff;
+  --crew-surface-muted: #f4f6f5;
+  --crew-border: #dce3e0;
+  --crew-border-strong: #bdc9c5;
+  --crew-muted: #64716d;
+}
+html[data-crew-palette="classic"] body { background: #f4f6f5; color: #172421; }
+html[data-crew-palette="classic"] .card { border: 1px solid var(--crew-border); }
+body { min-height: 100vh; }
+.navbar { background: var(--crew-accent); }
+.navbar-brand { letter-spacing: .02em; }
+.app-tabs { gap: .35rem; }
+.app-tabs .nav-link { color: var(--crew-accent); background: var(--crew-surface); border: 1px solid var(--crew-border); }
+.app-tabs .nav-link.active { color: var(--crew-accent-contrast); background: var(--crew-accent); border-color: var(--crew-accent); }
+.section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1rem; }
+.section-heading h2 { font-size: 1.45rem; margin-bottom: .15rem; }
+.section-heading p { color: var(--crew-muted); margin: 0; }
+.job-date { min-width: 4.75rem; background: var(--crew-accent-soft); color: var(--crew-accent-soft-text); border-radius: .65rem; padding: .6rem; text-align: center; }
+.job-date strong { display: block; font-size: 1.35rem; }
+.record-actions { white-space: nowrap; }
+.location-map { position: relative; min-height: 360px; overflow: hidden; border-radius: .75rem; border: 1px solid #bed0ca; background-color: #e9f0ec; background-image: linear-gradient(rgba(24,76,70,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(24,76,70,.08) 1px,transparent 1px); background-size: 32px 32px; }
+.map-point { position: absolute; transform: translate(-50%,-50%); display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 3px solid #fff; border-radius: 50%; background: var(--crew-highlight); color: #1f2a27; font-weight: 700; box-shadow: 0 .2rem .6rem rgba(0,0,0,.25); cursor: default; }
+.map-label { position: absolute; transform: translate(-50%,1.5rem); max-width: 9rem; padding: .1rem .35rem; border-radius: .25rem; background: rgba(255,255,255,.9); color: #1f2a27; font-size: .75rem; text-align: center; }
+.location-map { height: 360px; }
+.map-tile { position: absolute; width: 256px; height: 256px; max-width: none; user-select: none; pointer-events: none; }
+.map-point, .map-label { z-index: 2; }
+.map-empty { padding: 1rem; }
+.map-attribution { position: absolute; right: 0; bottom: 0; z-index: 3; padding: .1rem .4rem; background: rgba(255,255,255,.85); color: #1f2a27; font-size: .7rem; border-top-left-radius: .25rem; }
+.message-author { font-weight: 600; color: var(--crew-accent); }
+.message-actions .btn-link { padding: 0 .5rem 0 0; font-size: .85rem; text-decoration: none; }
+.message-replies { margin-top: .75rem; }
+.message-reply { margin-left: 1rem; padding: .5rem 0 .25rem .9rem; border-left: 3px solid var(--crew-accent-soft); }
+.message-flat { margin-left: 0; }
+.message-quote { padding: .5rem .75rem; border-left: 3px solid var(--crew-border-strong); color: var(--crew-muted); background: var(--crew-surface-muted); white-space: pre-wrap; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .3rem; }
+.calendar-weekday { text-align: center; font-size: .8rem; font-weight: 600; color: var(--crew-muted); }
+.calendar-day { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: .15rem; min-height: 5.5rem; padding: .3rem; border: 1px solid var(--crew-border); border-radius: .5rem; background: var(--crew-surface); text-align: left; overflow: hidden; color: inherit; }
+button.calendar-day:hover { border-color: var(--crew-accent); }
+.calendar-blank { background: transparent; border-color: transparent; }
+.calendar-day.is-today .calendar-number { background: var(--crew-highlight); color: #1f2a27; border-radius: 50%; }
+.calendar-day.is-selected { outline: 2px solid var(--crew-accent); outline-offset: -2px; }
+.calendar-number { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; font-weight: 600; font-size: .85rem; }
+.calendar-count { display: none; position: absolute; right: .25rem; top: .25rem; min-width: 1.2rem; padding: 0 .3rem; border-radius: 1rem; background: var(--crew-accent); color: var(--crew-accent-contrast); font-size: .7rem; text-align: center; }
+.calendar-job { display: block; padding: .05rem .3rem; border-radius: .25rem; background: var(--crew-accent-soft); color: var(--crew-accent-soft-text); font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendar-more { font-size: .7rem; color: var(--crew-muted); }
+.empty-state { padding: 2rem; text-align: center; color: var(--crew-muted); background: var(--crew-surface); border: 1px dashed var(--crew-border-strong); border-radius: .75rem; }
+textarea { min-height: 7rem; }
+@media (max-width: 575.98px) { .app-tabs { display: grid; grid-template-columns: 1fr 1fr; } .location-map { height: 300px; } .calendar-day { min-height: 3.25rem; } .calendar-jobs { display: none; } .calendar-count { display: block; } .message-reply { margin-left: .4rem; padding-left: .6rem; } }

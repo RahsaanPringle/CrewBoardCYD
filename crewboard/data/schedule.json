@@ -1,0 +1,135 @@
+[
+    {
+        "id": "job-sample-1",
+        "title": "Sample morning job",
+        "date": "2026-11-02",
+        "startTime": "08:00",
+        "endTime": "10:00",
+        "locationId": "loc-client-1",
+        "crewIds": [
+            "emp-crew-1",
+            "emp-mvwkn62a-pg4lq"
+        ],
+        "notes": "Use the side entrance. This is sample data."
+    },
+    {
+        "id": "job-demo-01",
+        "title": "Demo - Roanoke mowing and edging",
+        "date": "2026-11-02",
+        "startTime": "08:00",
+        "endTime": "10:00",
+        "locationId": "loc-demo-roanoke",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Mow turf, edge walkways, and blow clippings clear."
+    },
+    {
+        "id": "job-demo-02",
+        "title": "Demo - Moneta leaf collection",
+        "date": "2026-11-02",
+        "startTime": "08:30",
+        "endTime": "11:30",
+        "locationId": "loc-demo-moneta",
+        "crewIds": ["emp-demo-riley", "emp-demo-taylor"],
+        "notes": "Demo job. Bring leaf bags and tarps; keep collected leaves out of drains."
+    },
+    {
+        "id": "job-demo-03",
+        "title": "Demo - Salem fall cleanup",
+        "date": "2026-11-03",
+        "startTime": "08:00",
+        "endTime": "11:00",
+        "locationId": "loc-demo-salem",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Collect leaves and remove fallen twigs before mowing."
+    },
+    {
+        "id": "job-demo-04",
+        "title": "Demo - Bedford bed maintenance",
+        "date": "2026-11-03",
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "locationId": "loc-demo-bedford",
+        "crewIds": ["emp-demo-riley", "emp-demo-taylor"],
+        "notes": "Demo job. Weed planting beds and tidy mulch edges."
+    },
+    {
+        "id": "job-demo-05",
+        "title": "Demo - Christiansburg turf service",
+        "date": "2026-11-04",
+        "startTime": "08:00",
+        "endTime": "10:30",
+        "locationId": "loc-demo-christiansburg",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Mow open areas and trim around signs."
+    },
+    {
+        "id": "job-demo-06",
+        "title": "Demo - Blacksburg garden cleanup",
+        "date": "2026-11-04",
+        "startTime": "12:00",
+        "endTime": "14:30",
+        "locationId": "loc-demo-blacksburg",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Afternoon stop after Christiansburg; collect leaves from beds."
+    },
+    {
+        "id": "job-demo-07",
+        "title": "Demo - Rocky Mount yard cleanup",
+        "date": "2026-11-05",
+        "startTime": "08:30",
+        "endTime": "11:30",
+        "locationId": "loc-demo-rocky-mount",
+        "crewIds": ["emp-demo-riley", "emp-demo-taylor"],
+        "notes": "Demo job. Clear leaves from the yard and inspect fence-line growth."
+    },
+    {
+        "id": "job-demo-08",
+        "title": "Demo - Roanoke weekly touch-up",
+        "date": "2026-11-06",
+        "startTime": "08:00",
+        "endTime": "10:00",
+        "locationId": "loc-demo-roanoke",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Check turf height and clear paths before the weekend."
+    },
+    {
+        "id": "job-demo-09",
+        "title": "Demo - Moneta grounds inspection",
+        "date": "2026-11-06",
+        "startTime": "09:00",
+        "endTime": "11:00",
+        "locationId": "loc-demo-moneta",
+        "crewIds": ["emp-demo-riley", "emp-demo-taylor"],
+        "notes": "Demo job. Walk the grounds and list follow-up maintenance needs."
+    },
+    {
+        "id": "job-demo-10",
+        "title": "Demo - Salem weekly mowing",
+        "date": "2026-11-09",
+        "startTime": "08:00",
+        "endTime": "10:30",
+        "locationId": "loc-demo-salem",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Skip mowing if turf is too wet; report conditions to the crew lead."
+    },
+    {
+        "id": "job-demo-11",
+        "title": "Demo - Bedford leaf pickup",
+        "date": "2026-11-10",
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "locationId": "loc-demo-bedford",
+        "crewIds": ["emp-demo-riley", "emp-demo-taylor"],
+        "notes": "Demo job. Return visit for seasonal leaf collection."
+    },
+    {
+        "id": "job-demo-12",
+        "title": "Demo - Blacksburg mulch refresh",
+        "date": "2026-11-11",
+        "startTime": "08:00",
+        "endTime": "11:00",
+        "locationId": "loc-demo-blacksburg",
+        "crewIds": ["emp-demo-avery", "emp-demo-jordan", "emp-demo-casey"],
+        "notes": "Demo job. Refresh thin mulch areas without piling mulch against trunks."
+    }
+]

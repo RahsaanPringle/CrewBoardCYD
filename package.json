@@ -1,0 +1,14 @@
+{
+  "name": "crewboard-local-dev",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local development host for the CrewBoard CYD web interface",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node tools/dev-server.mjs",
+    "test": "node --test tools/dev-server.test.mjs",
+    "check": "node --check tools/dev-server.mjs && node --check CrewBoard_CYD/sd-card/crewboard/www/app.js"
+  }
+}

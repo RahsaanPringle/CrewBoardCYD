@@ -1,0 +1,162 @@
+:root {
+  --green: #184c46;
+  --mint: #dceee8;
+  --line: #d7dfdc;
+  --muted: #52635c;
+}
+
+body {
+  font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header>div,
+main {
+  max-width: 1050px;
+  margin: auto;
+}
+
+header h1 {
+  line-height: 1.25;
+  margin: 0 0 .75rem;
+}
+
+header p {
+  margin: .5rem 0;
+}
+
+h2 {
+  padding-bottom: .3rem;
+}
+
+h3 {
+  margin-top: 1.5rem;
+}
+
+a {
+  text-underline-offset: .15em;
+}
+
+header a {
+  color: white;
+}
+
+nav,
+.callout,
+.card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.recommend {
+  border-left: 5px solid var(--green);
+}
+
+.warning {
+  border-left: 5px solid #a34a10;
+  background: #fff6ec;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.table-wrap {
+  margin: 1rem 0;
+}
+
+th,
+td {
+  padding: .7rem;
+  border: 1px solid var(--line);
+}
+
+code {
+  background: #e8efeb;
+  padding: .1rem .25rem;
+  border-radius: .2rem;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  background: #172b24;
+  color: #eef6f1;
+}
+
+pre code {
+  overflow-wrap: normal;
+}
+
+.flow {
+  display: flex;
+  align-items: stretch;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.flow .node {
+  flex: 1 1 180px;
+  border: 2px solid var(--green);
+  border-radius: .5rem;
+  padding: .9rem;
+  background: white;
+}
+
+.flow .arrow {
+  align-self: center;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--green);
+}
+
+li {
+  margin: .35rem 0;
+}
+
+@media (max-width: 600px) {
+  header h1 {
+    font-size: 1.65rem;
+  }
+
+  .flow {
+    flex-direction: column;
+  }
+
+  .flow .node {
+    flex-basis: auto;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+    font-size: 11pt;
+  }
+
+  header {
+    color: #172421;
+    background: white;
+    padding: 0;
+  }
+
+  main {
+    padding: 0;
+  }
+
+  nav {
+    display: none;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    background: #eee;
+    color: black;
+  }
+
+  a {
+    color: inherit;
+  }
+}
