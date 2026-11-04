@@ -98,6 +98,7 @@ The roster requires only a display name. Business role, phone, email, birthday, 
 - **Message board:** every signed-in user can post and reply, including replies to replies. The server stamps each post with the signed-in username, which is displayed on the message. Authors can delete their own posts; the owner can edit or delete any post. Deleting a post also deletes its replies. Post times come from the browser's clock.
 - **Locations:** latitude and longitude are required. Only locations with coordinates are pinned. The map draws OpenStreetMap tiles when the viewing device has internet access and falls back to the offline grid otherwise.
 - **Schedule:** switch between **List** and **Calendar** views. Select a calendar day to see its jobs.
+- **Last active tab:** Schedule, Messages, Roster, or Locations reopens after a refresh or a later visit in the same browser profile. Only the tab target is saved in `localStorage` under `crewboard.activeTab`; no tab content, form data, or credentials are saved by this feature or sent to the CYD. Missing, invalid, or unavailable storage leaves Schedule as the default. Storage is scoped to the page origin: a different IP address, hostname, protocol, or port may have a separate preference. The preference is not synchronized across devices or associated with a login.
 
 API endpoints added for staff writes (all require the `X-CrewBoard-Request: 1` header):
 
