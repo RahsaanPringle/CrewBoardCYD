@@ -60,21 +60,46 @@ function themeFiles() {
 const text = (value, max, required = true) => value == null ? !required :
   typeof value === 'string' && Buffer.byteLength(value) <= max && (!required || value.length > 0);
 
-function validate(collection, records) {
+function validCalendarDate(value, yearOptional = false) {
+  const match = typeof value === 'string' && /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec(value);
+  if (!match || (!yearOptional && !match[1])) return false;
+  const year = match[1] ? Number(match[1]) : 2000;
+  const month = Number(match[2]); const day = Number(match[3]);
+  if (!year || month < 1 || month > 12) return false;
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day >= 1 && day <= days[month - 1];
+}
+const validTime = (value) => typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+const validEmail = (value) => typeof value === 'string' &&
+  /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(value);
+const empty = (value) => value == null || value === '';
+
+function validate(collection, records, previousRecords = []) {
   requireCondition(Array.isArray(records), 422, 'The collection must be a JSON array.');
   requireCondition(records.length <= limits[collection], 422, 'This collection has too many records.');
+  const previous = new Map(previousRecords.filter((record) => record && record.id).map((record) => [record.id, record]));
   const ids = new Set();
   for (const record of records) {
     requireCondition(record && text(record.id, 64), 422, 'Every record needs a short ID.');
     requireCondition(!ids.has(record.id), 422, 'Record IDs must be unique.');
     ids.add(record.id);
     const fields = (spec) => Object.entries(spec).every(([key, [max, required = true]]) => text(record[key], max, required));
+    const unchanged = (...keys) => {
+      const old = previous.get(record.id);
+      return !!old && keys.every((key) => (record[key] == null ? '' : record[key]) === (old[key] == null ? '' : old[key]));
+    };
     if (collection === 'roster') {
       requireCondition(fields({ name: [60], role: [40, false], username: [40, false],
         phone: [30, false], email: [100, false], birthday: [10, false],
         emergencyContactName: [80, false], emergencyContactPhone: [30, false], notes: [300, false] }) &&
         typeof record.active === 'boolean', 422, 'A roster record is invalid.');
       requireCondition(!record.role || roles.includes(record.role), 422, 'Choose a role from the defined role list.');
+      requireCondition(empty(record.birthday) || validCalendarDate(record.birthday, true) || unchanged('birthday'),
+        422, 'Birthday must be a valid MM-DD or YYYY-MM-DD.');
+      requireCondition(empty(record.email) || validEmail(record.email) || unchanged('email'), 422, 'Enter a valid email address.');
+      requireCondition(empty(record.username) || !record.username.includes(':') || unchanged('username'),
+        422, 'A username cannot contain a colon.');
     } else if (collection === 'locations') {
       requireCondition(fields({ name: [80], address: [120], city: [60], region: [30, false], postalCode: [16, false] }),
         422, 'A location record is invalid.');
@@ -84,9 +109,16 @@ function validate(collection, records) {
       requireCondition(fields({ title: [80], date: [10], startTime: [5], endTime: [5, false],
         locationId: [64], notes: [500, false] }) && Array.isArray(record.crewIds), 422, 'A schedule record is invalid.');
       requireCondition(record.crewIds.length <= 12, 422, 'A job has too many crew assignments.');
+      requireCondition(validCalendarDate(record.date) || unchanged('date'), 422, 'Job date must be a valid YYYY-MM-DD.');
+      requireCondition(validTime(record.startTime) || unchanged('startTime'), 422, 'Start time must use HH:MM.');
+      requireCondition(empty(record.endTime) || validTime(record.endTime) || unchanged('endTime'), 422, 'End time must use HH:MM.');
+      requireCondition(empty(record.endTime) || !validTime(record.startTime) || !validTime(record.endTime) ||
+        record.endTime >= record.startTime || unchanged('startTime', 'endTime'), 422, 'End time cannot be earlier than start time.');
     } else {
       requireCondition(fields({ title: [80, !record.parentId], body: [1000], postedAt: [25],
         expiresAt: [10, false], author: [40, false], parentId: [64, false] }), 422, 'A message record is invalid.');
+      requireCondition(empty(record.expiresAt) || validCalendarDate(record.expiresAt) || unchanged('expiresAt'),
+        422, 'Expiry date must be a valid YYYY-MM-DD.');
     }
   }
 }
@@ -114,7 +146,7 @@ export function prepareStorage(storage = defaultStorage) {
     (!config.theme || themeName(config.theme)), 500, 'Invalid local development configuration.');
   for (const collection of Object.keys(limits)) {
     const records = readJson(safePath(storage, `data/${collection}.json`));
-    validate(collection, records);
+    validate(collection, records, records);
     requireCondition(Buffer.byteLength(JSON.stringify(records)) <= maxBody, 500, `${collection} exceeds the CYD size limit.`);
   }
   return { config, created };
@@ -177,7 +209,7 @@ export function createDevServer({ storage = defaultStorage, logger = console } =
   const collectionPath = (collection) => safePath(storage, `data/${collection}.json`);
   const load = (collection) => readJson(collectionPath(collection));
   function save(collection, records) {
-    validate(collection, records);
+    validate(collection, records, load(collection));
     const body = JSON.stringify(records);
     requireCondition(Buffer.byteLength(body) <= maxBody, 422, 'This collection is full. Ask the owner to remove older records.');
     install(collectionPath(collection), body);

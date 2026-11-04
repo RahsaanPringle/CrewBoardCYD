@@ -19,7 +19,7 @@ function fixture(asset, { saved = null, failure, missingPane, disabledTab } = {}
   }));
   const document = {
     querySelectorAll: () => buttons,
-    getElementById: (id) => id === missingPane ? null : { id }
+    getElementById: (id) => id === missingPane ? null : { id, addEventListener() {} }
   };
   const window = { CrewBoardTheme: {} };
   const chain = {
