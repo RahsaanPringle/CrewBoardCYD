@@ -109,6 +109,8 @@ After replacing SD-card files or reflashing, restart the CYD and perform a hard 
 
 If `/api/v1/` returns `404`, verify that `CrewBoard_CYD.ino`, rather than the original `CYD-Intranet-Config.ino`, is installed on the device.
 
+If a custom theme does not appear in the theme menu or falls back to the classic look, confirm that the file is directly inside `/crewboard/css/` (not in a subfolder), ends in `.css`, and uses only letters, numbers, `.`, `-`, and `_` in its name. If `/config.json` names a site theme, the name must match the file exactly. A firmware build from before theme support only serves the classic look.
+
 ## Configured Wi-Fi is unavailable
 
 CrewBoard reads `/config.json` from the SD-card root. It waits up to 20 seconds for the configured Wi-Fi network and then automatically starts its setup access point.

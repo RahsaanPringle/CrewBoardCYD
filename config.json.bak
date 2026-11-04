@@ -1,0 +1,31 @@
+{
+  "wifi": {
+    "ssid": "Lake House",
+    "password": "5403147127"
+  },
+  "setupAccessPoint": {
+    "ssid": "CYDnet",
+    "password": "jump70lake"
+  },
+  "admin": {
+    "username": "Leo",
+    "password": "pass"
+  },
+  "users": [
+    {
+      "username": "Hilda",
+      "password": "pass",
+      "employeeId": "emp-crew-1"
+    },
+    {
+      "username": "Rocky",
+      "password": "pass",
+      "employeeId": "emp-crew-2"
+    },
+    {
+      "employeeId": "emp-crew-3",
+      "username": "Lettus",
+      "password": "pass"
+    }
+  ]
+}

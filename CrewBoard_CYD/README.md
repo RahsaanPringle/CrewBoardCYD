@@ -2,6 +2,14 @@
 
 CrewBoard is a small, local-network coordination server for an ESP32-2432S028R-style Cheap Yellow Display (CYD). The CYD screen reports startup and network status. Normal use is through a phone or computer browser.
 
+## Develop without hardware
+
+From the repository root, run `npm run dev` with Node.js 22 or newer, then open
+`http://127.0.0.1:8080`. This serves the same files in `sd-card/crewboard/www`
+with a local API and isolated persistent development data. No changes to the
+Arduino build are required. See the [local development guide](../docs/local-development.md)
+for credentials, tests, limitations, and safe deployment back to the CYD.
+
 ## Hardware assumptions
 
 - ESP32-2432S028R or compatible 2.8-inch CYD
@@ -51,6 +59,8 @@ Format the card as FAT32. Copy the contents of the repository's `sd-card` direct
 │   ├── schedule.json
 │   └── messages.json
 ├── shared/
+├── css/
+│   └── (optional Bootstrap 5.3 theme files, e.g. vapor.min.css)
 └── www/
     ├── index.html
     ├── app.css
@@ -96,6 +106,7 @@ API endpoints added for staff writes (all require the `X-CrewBoard-Request: 1` h
 | `POST /api/v1/messages` | Any user | Add a post (`title`, `body`, `postedAt`) or reply (`parentId`, `body`, `postedAt`). |
 | `DELETE /api/v1/messages/{id}` | Author or owner | Delete a post and its replies. |
 | `PUT /api/v1/profile` | Linked staff | Update the signed-in user's own contact fields. |
+| `GET /api/v1/themes` | Any user | List theme files in `/crewboard/css` and the site default theme. |
 
 CrewBoard waits up to 20 seconds for the configured Wi-Fi network. If the network is unavailable or cannot be joined, it automatically starts the configured setup access point. Connect a phone or computer to that access point and browse to the IP shown on the display, normally `http://192.168.4.1/`. The fallback does not provide an in-browser Wi-Fi configuration editor; update the SD-card configuration and restart.
 
@@ -136,6 +147,16 @@ To restore, power off the CYD and copy a known-good `/crewboard` folder and `/co
 ## Front-end dependencies
 
 Bootstrap 5.3.3 and jQuery 3.7.1 are stored under `/crewboard/www/vendor` and served locally. CrewBoard does not require a CDN. The street-map background and the **Open street map** links on location cards load from openstreetmap.org and need internet access on the viewing phone or computer; pins and the grid work offline.
+
+## Themes
+
+CrewBoard can swap the bundled Bootstrap stylesheet for any Bootstrap 5.3 theme, such as a [Bootswatch](https://bootswatch.com) `bootstrap.min.css`.
+
+1. Copy the theme file to `/crewboard/css/` on the SD card. Give it a descriptive name, such as `vapor.min.css`. Names may contain only letters, numbers, `.`, `-`, and `_`, must end in `.css`, and must be 64 characters or fewer.
+2. Optional: set the site-wide default by adding `"theme": "vapor.min.css"` to `/config.json`. The setting is read at startup and whenever a roster login is saved. Leave it empty or remove it to use the classic CrewBoard look.
+3. Each browser can override the site default with the theme menu in the top bar. The choice is saved in that browser only. **CrewBoard classic** always uses the bundled Bootstrap stylesheet and green palette.
+
+The theme replaces `vendor/bootstrap.min.css` rather than loading on top of it, so only one large stylesheet is downloaded. When a custom theme is active, `app.css` takes its colors from the theme's Bootstrap variables. If a theme file is missing, the browser falls back to the classic look. Up to 40 theme files are listed.
 
 ## Known limitations
 

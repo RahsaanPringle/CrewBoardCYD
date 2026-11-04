@@ -1,0 +1,37 @@
+{
+  "wifi": {
+    "ssid": "Fivenet",
+    "password": "jump70lake"
+  },
+  "setupAccessPoint": {
+    "ssid": "CYDnet",
+    "password": "jump70lake"
+  },
+  "admin": {
+    "username": "Leo",
+    "password": "pass"
+  },
+  "theme": "bootstrap.min.css",
+  "users": [
+    {
+      "username": "Hilda",
+      "password": "pass",
+      "employeeId": "emp-crew-1"
+    },
+    {
+      "username": "Rocky",
+      "password": "pass",
+      "employeeId": "emp-crew-2"
+    },
+    {
+      "employeeId": "emp-crew-3",
+      "username": "Lettus",
+      "password": "pass"
+    },
+    {
+      "employeeId": "emp-mvztvowy-yol8g",
+      "username": "test007",
+      "password": "pass"
+    }
+  ]
+}

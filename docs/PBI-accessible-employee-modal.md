@@ -1,7 +1,7 @@
 # PBI: Make the Add Employee modal accessible and scrollable
 
 **Type:** Product Backlog Item
-**Status:** Proposed
+**Status:** Implemented; manual device/accessibility acceptance pending
 **Area:** CrewBoard web interface / Roster and accessibility
 
 ## User story
@@ -117,3 +117,48 @@ Prefer Bootstrap 5.3.3's supported modal, form, spacing, and responsive utilitie
 - Browser zoom, phone landscape, virtual-keyboard, and long-validation-message scenarios are verified.
 - Every other editor using the shared record modal passes regression testing.
 
+## Implementation and verification — November 3, 2026
+
+The deployable shared editor now uses the form itself as Bootstrap's
+`.modal-content`, with the header, scrolling body, and footer as direct children.
+This fixes the intervening unconstrained form that previously pushed the footer
+outside the viewport. Phones below the small breakpoint use Bootstrap fullscreen
+mode. Dynamic viewport height and safe-area padding supplement Bootstrap's sizing;
+unsupported dynamic viewport units fall back to Bootstrap's existing height.
+
+The dialog is named by its title. Opening focuses that title without opening a
+text keyboard and resets the body scroll and generated fields. Bootstrap retains
+its native focus trap and dismissal behavior. Closing restores focus to the
+trigger, including a replacement Edit button after a successful save re-renders
+the record. Login and birthday instructions are associated with their inputs.
+No libraries, API contracts, or firmware changes are required.
+
+### Verified locally
+
+- [x] Reproduced the original problem: the footer extended below 1,100 pixels
+  inside a 640-pixel viewport.
+- [x] Checked constrained content, independently scrollable body, visible footer,
+  reachable final checkbox, no body horizontal overflow, and background scroll
+  lock at 390x844, 844x390, 768x1024, 1280x480, 640x400, and 320x200 CSS pixels.
+  The last two sizes exercise zoom-equivalent layout space, not actual browser zoom.
+- [x] Checked named dialog, title focus, forward/reverse focus containment,
+  Escape, Cancel, Close, restored opener focus, fresh fields, and reset scroll.
+- [x] Checked native invalid-email submission focuses the invalid field and
+  preserves other entered values.
+- [x] Checked Add/Edit Employee, Add/Edit Location, Add/Edit Job, New/Edit
+  Message, Reply, and Edit My Details opening and dismissal.
+- [x] Checked a short Reply does not unnecessarily fill a desktop viewport.
+- [x] Checked successful employee save with mocked write responses restores
+  focus to the re-rendered Edit action without changing local business data.
+
+### Remaining manual acceptance
+
+- [ ] Real Android/iPhone touch scrolling, native pickers, and virtual keyboards.
+- [ ] Device browser chrome, safe areas, and orientation changes.
+- [ ] Actual browser zoom at 200% and 400% where practical.
+- [ ] Representative screen-reader announcement and navigation.
+- [ ] CYD-served asset smoke test after copying the updated web files.
+
+Leave the overall roadmap item unchecked until the required manual acceptance
+has been completed. Browser accessibility snapshots and viewport emulation do
+not substitute for screen-reader or physical-device testing.

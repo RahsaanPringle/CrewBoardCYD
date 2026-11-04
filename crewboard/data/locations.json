@@ -1,0 +1,92 @@
+[
+    {
+        "id": "loc-shop",
+        "name": "Sample Shop",
+        "address": "591 Merriman Way Rd",
+        "city": "Moneta",
+        "region": "VA",
+        "postalCode": "24121",
+        "latitude": 37.13498771456688,
+        "longitude": -79.68238441410269
+    },
+    {
+        "id": "loc-client-1",
+        "name": "Sample Job Site",
+        "address": "ZIP 24121 area (demo site; no street address)",
+        "city": "Moneta",
+        "region": "VA",
+        "postalCode": "24121",
+        "latitude": 37.14538768298418,
+        "longitude": -79.58762733874886
+    },
+    {
+        "id": "loc-demo-moneta",
+        "name": "Demo - Moneta Lakeside Grounds",
+        "address": "ZIP 24121 area (demo site; no street address)",
+        "city": "Moneta",
+        "region": "VA",
+        "postalCode": "24121",
+        "latitude": 37.1784,
+        "longitude": -79.6521
+    },
+    {
+        "id": "loc-demo-roanoke",
+        "name": "Demo - Roanoke Office Grounds",
+        "address": "ZIP 24018 area (demo site; no street address)",
+        "city": "Roanoke",
+        "region": "VA",
+        "postalCode": "24018",
+        "latitude": 37.2503,
+        "longitude": -80.0525
+    },
+    {
+        "id": "loc-demo-salem",
+        "name": "Demo - Salem Community Lawn",
+        "address": "ZIP 24153 area (demo site; no street address)",
+        "city": "Salem",
+        "region": "VA",
+        "postalCode": "24153",
+        "latitude": 37.2853,
+        "longitude": -80.0692
+    },
+    {
+        "id": "loc-demo-christiansburg",
+        "name": "Demo - Christiansburg Retail Grounds",
+        "address": "ZIP 24073 area (demo site; no street address)",
+        "city": "Christiansburg",
+        "region": "VA",
+        "postalCode": "24073",
+        "latitude": 37.1353,
+        "longitude": -80.4188
+    },
+    {
+        "id": "loc-demo-blacksburg",
+        "name": "Demo - Blacksburg Garden Beds",
+        "address": "ZIP 24060 area (demo site; no street address)",
+        "city": "Blacksburg",
+        "region": "VA",
+        "postalCode": "24060",
+        "latitude": 37.2563,
+        "longitude": -80.4347
+    },
+    {
+        "id": "loc-demo-rocky-mount",
+        "name": "Demo - Rocky Mount Service Yard",
+        "address": "ZIP 24151 area (demo site; no street address)",
+        "city": "Rocky Mount",
+        "region": "VA",
+        "postalCode": "24151",
+        "latitude": 36.9891,
+        "longitude": -79.884
+    },
+    {
+        "id": "loc-demo-bedford",
+        "name": "Demo - Bedford Neighborhood Green",
+        "address": "ZIP 24523 area (demo site; no street address)",
+        "city": "Bedford",
+        "region": "VA",
+        "postalCode": "24523",
+        "latitude": 37.3153,
+        "longitude": -79.5331
+    }
+]

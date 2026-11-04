@@ -11,6 +11,8 @@
   };
   const modal = new bootstrap.Modal(document.getElementById('record-modal'));
   let editing = { kind: '', id: '', parentId: '' };
+  let editorTrigger = null;
+  let editorTriggerMatch = null;
 
   function escapeHtml(value) { return $('<div>').text(value == null ? '' : String(value)).html(); }
   function makeId(prefix) { return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
@@ -252,7 +254,8 @@
 
   function contactFields(record) {
     return '<div class="row"><div class="col-md-6">' + field('phone', 'Phone (optional)', 'tel', record.phone, 'maxlength="30"') + '</div><div class="col-md-6">' + field('email', 'Email (optional)', 'email', record.email, 'maxlength="100"') + '</div></div>' +
-      field('birthday', 'Birthday (optional)', 'text', record.birthday, 'maxlength="10" placeholder="MM-DD or YYYY-MM-DD"') +
+      field('birthday', 'Birthday (optional)', 'text', record.birthday, 'maxlength="10" aria-describedby="birthday-help"') +
+      '<p id="birthday-help" class="form-text">Use MM-DD or YYYY-MM-DD.</p>' +
       '<div class="row"><div class="col-md-6">' + field('emergencyContactName', 'Emergency contact name (optional)', 'text', record.emergencyContactName, 'maxlength="80"') + '</div><div class="col-md-6">' + field('emergencyContactPhone', 'Emergency contact phone (optional)', 'tel', record.emergencyContactPhone, 'maxlength="30"') + '</div></div>';
   }
 
@@ -262,7 +265,12 @@
     return '<div class="mb-3"><label class="form-label" for="field-role">Business role</label><select class="form-select" id="field-role" name="role"><option value="">No role</option>' + options + '</select>' + note + '</div>';
   }
 
-  function openEditor(kind, id, parentId) {
+  function openEditor(kind, id, parentId, trigger) {
+    editorTrigger = trigger;
+    editorTriggerMatch = trigger ? {
+      action: ['add-record', 'edit-record', 'edit-profile', 'reply-message', 'edit-message'].find((name) => trigger.classList.contains(name)),
+      kind: trigger.dataset.kind || '', id: trigger.dataset.id || ''
+    } : null;
     editing = { kind: kind, id: id || '', parentId: parentId || '' };
     const record = id ? $.extend(true, {}, byId(kind === 'reply' ? 'messages' : kind, id)) : {};
     let title = ''; let fields = '';
@@ -272,9 +280,9 @@
       fields = field('name', 'Display name', 'text', record.name, 'required maxlength="60"') + roleSelect(record.role) +
         '<hr><h3 class="h6">Contact details</h3>' + contactFields(record) +
         '<div class="mb-3"><label class="form-label" for="field-notes">Roster notes (optional)</label><textarea class="form-control" id="field-notes" name="notes" maxlength="300">' + escapeHtml(record.notes || '') + '</textarea></div>' +
-        '<hr><h3 class="h6">CrewBoard login</h3><p class="form-text">Both fields may be left blank. Passwords are stored only in the protected configuration file.</p>' +
-        field('username', 'Username (optional)', 'text', account.username || record.username, 'maxlength="40" autocomplete="off"') +
-        field('password', account.username ? 'New password (leave blank to keep current)' : 'Password (required when adding a username)', 'password', '', 'maxlength="100" autocomplete="new-password"') +
+        '<hr><h3 class="h6">CrewBoard login</h3><p id="login-help" class="form-text">Both fields may be left blank. Passwords are stored only in the protected configuration file.</p>' +
+        field('username', 'Username (optional)', 'text', account.username || record.username, 'maxlength="40" autocomplete="off" aria-describedby="login-help"') +
+        field('password', account.username ? 'New password (leave blank to keep current)' : 'Password (required when adding a username)', 'password', '', 'maxlength="100" autocomplete="new-password" aria-describedby="login-help"') +
         '<div class="form-check"><input class="form-check-input" id="field-active" name="active" type="checkbox" ' + (record.active !== false ? 'checked' : '') + '><label class="form-check-label" for="field-active">Active employee</label></div>';
     } else if (kind === 'profile') {
       const employee = byId('roster', state.session.employeeId) || {};
@@ -300,8 +308,30 @@
         '<div class="mb-3"><label class="form-label" for="field-body">Message</label><textarea class="form-control" id="field-body" name="body" required maxlength="1000">' + escapeHtml(record.body || '') + '</textarea></div>' +
         (isAdmin() && !isReply ? field('expiresAt', 'Expiry date (optional)', 'date', record.expiresAt, '') : '');
     }
-    $('#record-modal-title').text(title); $('#record-fields').html(fields); modal.show();
+    $('#record-modal-title').text(title);
+    $('#record-form').removeClass('was-validated');
+    $('#record-fields').html(fields).scrollTop(0);
+    modal.show();
   }
+
+  $('#record-modal').on('shown.bs.modal', function () {
+    $('#record-fields').scrollTop(0);
+    document.getElementById('record-modal-title').focus({ preventScroll: true });
+  }).on('hide.bs.modal', function () {
+    if (this.contains(document.activeElement)) document.activeElement.blur();
+  }).on('hidden.bs.modal', function () {
+    let trigger = editorTrigger;
+    // Saving can replace the record's original action button during a re-render.
+    if (editorTriggerMatch && (!trigger || !trigger.isConnected)) {
+      const match = editorTriggerMatch;
+      trigger = Array.from(document.getElementsByClassName(match.action)).find((element) =>
+        (element.dataset.kind || '') === match.kind && (element.dataset.id || '') === match.id);
+    }
+    if (!trigger || !trigger.getClientRects().length) trigger = document.querySelector('#section-tabs .active');
+    if (trigger) trigger.focus({ preventScroll: true });
+    editorTrigger = null;
+    editorTriggerMatch = null;
+  });
 
   function contactValues() {
     return { phone: $('#field-phone').val().trim(), email: $('#field-email').val().trim(), birthday: $('#field-birthday').val().trim(), emergencyContactName: $('#field-emergencyContactName').val().trim(), emergencyContactPhone: $('#field-emergencyContactPhone').val().trim() };
@@ -377,12 +407,12 @@
     }).fail(failed);
   }
 
-  $(document).on('click', '.add-record', function () { openEditor($(this).data('kind'), ''); });
-  $(document).on('click', '.edit-record', function () { openEditor($(this).data('kind'), $(this).data('id')); });
+  $(document).on('click', '.add-record', function () { openEditor($(this).data('kind'), '', '', this); });
+  $(document).on('click', '.edit-record', function () { openEditor($(this).data('kind'), $(this).data('id'), '', this); });
   $(document).on('click', '.delete-record', function () { deleteRecord($(this).data('kind'), $(this).data('id')); });
-  $(document).on('click', '.edit-profile', function () { openEditor('profile', ''); });
-  $(document).on('click', '.reply-message', function () { openEditor('reply', '', $(this).data('id')); });
-  $(document).on('click', '.edit-message', function () { openEditor('messages', $(this).data('id')); });
+  $(document).on('click', '.edit-profile', function () { openEditor('profile', '', '', this); });
+  $(document).on('click', '.reply-message', function () { openEditor('reply', '', $(this).data('id'), this); });
+  $(document).on('click', '.edit-message', function () { openEditor('messages', $(this).data('id'), '', this); });
   $(document).on('click', '.delete-message', function () { deleteMessage($(this).data('id')); });
   $(document).on('click', '.schedule-view', function () { state.scheduleView = $(this).data('view'); renderSchedule(); });
   $(document).on('click', '.calendar-day[data-date]', function () { state.selectedDay = $(this).data('date'); renderCalendar(); });
@@ -414,6 +444,35 @@
       }
     });
   });
+  function themeLabel(fileName) {
+    return fileName.replace(/(\.min)?\.css$/i, '').split(/[-_.]+/).filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+
+  function loadThemes() {
+    const picker = $('#theme-picker');
+    const theme = window.CrewBoardTheme;
+    if (!theme) return;
+    api('themes').done((result) => {
+      const files = ((result && result.themes) || []).filter(theme.isValid).sort((a, b) => a.localeCompare(b));
+      const site = theme.isValid(result && result.siteTheme) ? result.siteTheme : '';
+      const options = [['', 'Site default (' + (site ? themeLabel(site) : 'Classic') + ')'], ['classic', 'CrewBoard classic']]
+        .concat(files.map((file) => [file, themeLabel(file)]));
+      picker.html(options.map((option) => '<option value="' + escapeHtml(option[0]) + '">' + escapeHtml(option[1]) + '</option>').join(''));
+      const stored = theme.stored();
+      picker.val(options.some((option) => option[0] === stored) ? stored : '').removeClass('d-none');
+    }).fail(() => picker.addClass('d-none'));
+  }
+
+  $('#theme-picker').on('change', function () {
+    const picker = $(this);
+    window.CrewBoardTheme.choose(picker.val(), (file) => {
+      showAlert('The theme "' + file + '" could not be loaded from the CYD.', 'warning');
+      picker.val('');
+      window.CrewBoardTheme.choose('');
+    });
+  });
   $('#refresh-all').on('click', loadAll);
+  loadThemes();
   loadAll();
 })(jQuery);

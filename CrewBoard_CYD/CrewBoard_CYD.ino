@@ -26,6 +26,8 @@ constexpr char primaryConfigPath[] = "/config.json";
 constexpr char webRoot[] = "/crewboard/www";
 constexpr char dataRoot[] = "/crewboard/data";
 constexpr char davStorageRoot[] = "/crewboard/shared";
+constexpr char themeRoot[] = "/crewboard/css";
+constexpr uint8_t maxThemeCount = 40;
 constexpr char ownerRole[] = "Owner";
 const char* const rosterRoles[] = { ownerRole, "Crew Lead", "Crew Member", "Equipment Operator", "Trainee" };
 
@@ -58,11 +60,15 @@ String setupApSsid;
 String setupApPassword;
 String adminUsername;
 String adminPassword;
+String siteTheme;
 UserCredential users[maxUserCount];
 uint8_t userCount = 0;
 String statusLines[statusLineCount];
 
 bool loadConfiguration();
+bool isThemeFileName(const String& name);
+String fileBaseName(const String& path);
+void sendThemesJson(WiFiClient& client);
 
 void drawStatus() {
   display.fillScreen(TFT_BLACK);
@@ -737,6 +743,11 @@ void handleApi(WiFiClient& client, const HttpRequest& request) {
     else sendJsonError(client, 405, "Method Not Allowed", "Method not supported by the profile API.");
     return;
   }
+  if (resource == "themes") {
+    if (request.method == "GET") sendThemesJson(client);
+    else sendJsonError(client, 405, "Method Not Allowed", "Method not supported by the themes API.");
+    return;
+  }
   if (resource == "messages" && request.method == "POST") { handleMessagePost(client, request); return; }
   if (resource.startsWith("messages/")) {
     const String messageId = resource.substring(9);
@@ -762,16 +773,58 @@ void handleApi(WiFiClient& client, const HttpRequest& request) {
   }
 }
 
+// Theme files are plain names like "vapor.min.css"; this also blocks path traversal.
+bool isThemeFileName(const String& name) {
+  if (name.length() < 5 || name.length() > 64 || name[0] == '.' || name.indexOf("..") >= 0) return false;
+  for (size_t i = 0; i < name.length(); ++i) {
+    const char c = name[i];
+    if (!isalnum(static_cast<unsigned char>(c)) && c != '.' && c != '-' && c != '_') return false;
+  }
+  String lower = name;
+  lower.toLowerCase();
+  return lower.endsWith(".css");
+}
+
+String webAssetPath(const String& requestPath) {
+  const String webPrefix = "/crewboard/www";
+  return requestPath.startsWith(webPrefix + "/") ? requestPath.substring(webPrefix.length()) : requestPath;
+}
+
 String staticPathFor(const String& requestPath) {
   if (requestPath == "/" || requestPath == "/crewboard/www/") return String(webRoot) + "/index.html";
 
-  String assetPath = requestPath;
-  const String webPrefix = "/crewboard/www";
-  if (assetPath.startsWith(webPrefix + "/")) assetPath = assetPath.substring(webPrefix.length());
-
+  const String assetPath = webAssetPath(requestPath);
   if (assetPath == "/app.css" || assetPath == "/app.js") return String(webRoot) + assetPath;
   if (assetPath.startsWith("/vendor/") && assetPath.indexOf('/', 8) < 0) return String(webRoot) + assetPath;
+  if (assetPath.startsWith("/css/")) {
+    const String name = assetPath.substring(5);
+    return isThemeFileName(name) ? String(themeRoot) + "/" + name : "";
+  }
   return "";
+}
+
+void sendSiteThemeScript(WiFiClient& client) {
+  sendText(client, 200, "OK", "application/javascript; charset=utf-8", "window.CREWBOARD_SITE_THEME = \"" + siteTheme + "\";\n", "Cache-Control: no-cache\r\n");
+}
+
+void sendThemesJson(WiFiClient& client) {
+  DynamicJsonDocument document(4096);
+  document["siteTheme"] = siteTheme;
+  JsonArray themes = document["themes"].to<JsonArray>();
+  File folder = SD.open(themeRoot);
+  if (folder && folder.isDirectory()) {
+    File entry = folder.openNextFile();
+    uint8_t count = 0;
+    while (entry && count < maxThemeCount) {
+      const String name = fileBaseName(String(entry.name()));
+      if (!entry.isDirectory() && isThemeFileName(name)) { themes.add(name); ++count; }
+      entry.close();
+      entry = folder.openNextFile();
+    }
+  }
+  if (folder) folder.close();
+  String body; serializeJson(document, body);
+  sendText(client, 200, "OK", "application/json; charset=utf-8", body, "Cache-Control: no-store\r\n");
 }
 
 String davRelativePath(const String& requestPath) {
@@ -955,6 +1008,8 @@ void handleClient(WiFiClient& client) {
     handleDav(client, request);
   } else if (request.path == "/crewboard/www") {
     sendEmpty(client, 302, "Found", "Location: /crewboard/www/\r\n");
+  } else if (webAssetPath(request.path) == "/theme.js" && (request.method == "GET" || request.method == "HEAD")) {
+    sendSiteThemeScript(client);
   } else {
     const String staticPath = staticPathFor(request.path);
     if (!staticPath.isEmpty() && (request.method == "GET" || request.method == "HEAD")) {
@@ -1004,6 +1059,9 @@ bool loadConfiguration() {
   }
   adminUsername = owner;
   adminPassword = ownerPassword;
+  const String theme = document["theme"] | "";
+  siteTheme = isThemeFileName(theme) ? theme : "";
+  if (!theme.isEmpty() && siteTheme.isEmpty()) logEvent("Invalid theme; using default");
   userCount = 0;
   for (JsonObject configuredUser : configuredUsers) {
     const char* username = configuredUser["username"] | "";

@@ -1,0 +1,95 @@
+[
+    {
+        "id": "msg-welcome",
+        "author": "Hilda",
+        "title": "Welcome to CrewBoard",
+        "body": "This is a sample post. Anyone signed in can reply, and the owner can remove it.",
+        "postedAt": "2026-10-28T08:00",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-welcome-reply",
+        "parentId": "msg-welcome",
+        "author": "Hilda",
+        "title": "",
+        "body": "Replies appear underneath the post they answer.",
+        "postedAt": "2026-10-28T08:05",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-19d15e-9fe0d2",
+        "parentId": "msg-welcome-reply",
+        "author": "Rocky",
+        "title": "",
+        "body": "Lorem Ipsum",
+        "postedAt": "2026-10-29T20:20",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-3700ad-636096",
+        "author": "Rocky",
+        "title": "Test",
+        "body": "Bold (serif):\n𝐓𝐞𝐬𝐭𝐢𝐧𝐠 𝐁𝐨𝐥𝐝 𝐭𝐞𝐱𝐭 𝐚𝐛𝐢𝐥𝐢𝐭𝐲\n\nBold (sans):\n𝗧𝗲𝘀𝘁𝗶𝗻𝗴 𝗕𝗼𝗹𝗱 𝘁𝗲𝘅𝘁 𝗮𝗯𝗶𝗹𝗶𝘁𝘆\n\nItalic Bold (serif):\n𝑻𝒆𝒔𝒕𝒊𝒏𝒈 𝑩𝒐𝒍𝒅 𝒕𝒆𝒙𝒕 𝒂𝒃𝒊𝒍𝒊𝒕𝒚\n\nItalic Bold (sans):\n𝙏𝙚𝙨𝙩𝙞𝙣𝙜 𝘽𝙤𝙡𝙙 𝙩𝙚𝙭𝙩 𝙖𝙗𝙞𝙡𝙞𝙩𝙮\n\nMedieval Bold:\n𝕿𝖊𝖘𝖙𝖎𝖓𝖌 𝕭𝖔𝖑𝖉 𝖙𝖊𝖝𝖙 𝖆𝖇𝖎𝖑𝖎𝖙𝖞\n\nDouble-Struck:\n𝕋𝕖𝕤𝕥𝕚𝕟𝕘 𝔹𝕠𝕝𝕕 𝕥𝕖𝕩𝕥 𝕒𝕓𝕚𝕝𝕚𝕥𝕪\n\nBlocks:\n🆃🅴🆂🆃🅸🅽🅶 🅱🅾🅻🅳 🆃🅴🆇🆃 🅰🅱🅸🅻🅸🆃🆈",
+        "postedAt": "2026-10-29T20:52",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-373d78-1398a8",
+        "parentId": "msg-3700ad-636096",
+        "author": "Rocky",
+        "title": "",
+        "body": "MonkeyTime",
+        "postedAt": "2026-10-29T20:52",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-4c933-e64dd9",
+        "author": "Leo",
+        "title": "Bacon Ipsum",
+        "body": "Bacon ipsum dolor amet capicola drumstick cow spare ribs picanha tenderloin landjaeger jerky meatloaf pork chop mortadella bacon biltong. Alcatra kielbasa pancetta hamburger capicola corned beef. Cupim shank alcatra chuck pork belly. Rump andouille prosciutto kevin chicken jerky. T-bone picanha biltong flank pancetta, pork loin leberkas alcatra cupim chislic swine fatback pig capicola. Cupim short loin kielbasa short ribs capicola corned beef swine ribeye frankfurter. Salami burgdoggen doner venison, ham cow chicken filet mignon spare ribs.",
+        "postedAt": "2026-10-31T11:46",
+        "expiresAt": "2027-10-31"
+    },
+    {
+        "id": "msg-demo-week-plan",
+        "author": "Demo Coordinator",
+        "title": "Demo - November route plan",
+        "body": "The November 2-11 demo schedule is ready. Avery's crew covers the valley and New River stops; Riley and Taylor cover Moneta, Bedford, and Rocky Mount. All demo sites are ZIP-area map points, not customer addresses.",
+        "postedAt": "2026-11-02T07:00",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-demo-route-reply",
+        "parentId": "msg-demo-week-plan",
+        "author": "Demo Avery",
+        "title": "",
+        "body": "Valley crew has reviewed the route. We will load the mower, trimmers, and leaf equipment before departure.",
+        "postedAt": "2026-11-02T07:10",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-demo-route-nested-reply",
+        "parentId": "msg-demo-route-reply",
+        "author": "Demo Jordan",
+        "title": "",
+        "body": "Trailer and equipment checks are complete for this fictional run.",
+        "postedAt": "2026-11-02T07:15",
+        "expiresAt": ""
+    },
+    {
+        "id": "msg-demo-weather",
+        "author": "Demo Coordinator",
+        "title": "Demo - Wet-weather reminder",
+        "body": "Sample notice only, not a weather forecast: check local conditions before departure. If turf is saturated, contact the crew lead before mowing.",
+        "postedAt": "2026-11-02T07:20",
+        "expiresAt": "2026-11-13"
+    },
+    {
+        "id": "msg-demo-supplies",
+        "author": "Demo Riley",
+        "title": "Demo - Supplies for fall cleanup",
+        "body": "For the demo lake route, pack leaf bags, tarps, gloves, and drinking water. Add any missing items to the morning checklist.",
+        "postedAt": "2026-11-02T07:25",
+        "expiresAt": ""
+    }
+]

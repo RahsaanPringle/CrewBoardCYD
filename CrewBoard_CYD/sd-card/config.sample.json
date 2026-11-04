@@ -11,6 +11,7 @@
     "username": "owner",
     "password": "CHANGE_THIS_TO_A_LONG_UNIQUE_PASSWORD"
   },
+  "theme": "",
   "users": [
     {
       "username": "staff1",

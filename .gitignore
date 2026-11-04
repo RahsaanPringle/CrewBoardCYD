@@ -37,3 +37,5 @@ CrewBoard_CYD/sd-card/crewboard/data/*.bak
 CrewBoard_CYD/sd-card/crewboard/shared/*.upload
 artifacts/
 CrewBoard_CYD/build/
+.local-dev/
+node_modules/
