@@ -422,6 +422,28 @@
     if (step === 0) { state.calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1); state.selectedDay = dateKey(today); } else { state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + step, 1); }
     renderCalendar();
   });
+  function initializeTabs() {
+    const storageKey = 'crewboard.activeTab';
+    const buttons = Array.from(document.querySelectorAll('#section-tabs button[data-bs-target]'));
+    $('#section-tabs').on('shown.bs.tab', 'button[data-bs-target]', function () {
+      try {
+        localStorage.setItem(storageKey, this.getAttribute('data-bs-target'));
+      } catch (error) {
+        console.warn('CrewBoard could not save the active tab in browser storage.');
+      }
+    });
+    let savedTab;
+    // localStorage is browser-local and scoped to the origin, not the login or CYD.
+    try {
+      savedTab = localStorage.getItem(storageKey);
+    } catch (error) {
+      console.warn('CrewBoard could not read the active tab from browser storage.');
+      return;
+    }
+    const button = buttons.find((item) => item.getAttribute('data-bs-target') === savedTab && !item.disabled);
+    if (button && document.getElementById(savedTab.slice(1))) bootstrap.Tab.getOrCreateInstance(button).show();
+  }
+
   $('#section-tabs').on('shown.bs.tab', 'button[data-bs-target="#locations-pane"]', renderLocationMap);
   let resizeTimer = 0;
   $(window).on('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderLocationMap, 200); });
@@ -475,4 +497,5 @@
   $('#refresh-all').on('click', loadAll);
   loadThemes();
   loadAll();
+  initializeTabs();
 })(jQuery);
