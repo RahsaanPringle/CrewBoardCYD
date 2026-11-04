@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Planning guide for a read-only GitHub Projects PBI board in CrewBoard, including authentication, secret storage, architecture, and scope decisions.">
+  <title>A GitHub PBI Board in CrewBoard: Options and Decisions</title>
+  <style>
+    :root { color-scheme: light; --green: #184c46; --mint: #dceee8; --line: #d7dfdc; --muted: #52635c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f4f6f5; color: #172421; font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    header { background: var(--green); color: white; padding: 2rem 1.25rem; }
+    header > div, main { max-width: 1050px; margin: auto; }
+    header h1 { line-height: 1.25; margin: 0 0 .75rem; }
+    header p { margin: .5rem 0; }
+    main { padding: 1.5rem 1.25rem 3rem; }
+    h2 { color: var(--green); margin-top: 2.5rem; border-bottom: 2px solid var(--mint); padding-bottom: .3rem; }
+    h3 { margin-top: 1.5rem; }
+    a { color: var(--green); text-underline-offset: .15em; }
+    header a { color: white; }
+    nav, .callout, .card { background: white; border: 1px solid var(--line); border-radius: .65rem; padding: 1rem 1.25rem; margin: 1rem 0; }
+    .recommend { border-left: 5px solid var(--green); }
+    .warning { border-left: 5px solid #a34a10; background: #fff6ec; }
+    .muted { color: var(--muted); }
+    .table-wrap { overflow-x: auto; margin: 1rem 0; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { padding: .7rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: var(--mint); }
+    code { background: #e8efeb; padding: .1rem .25rem; border-radius: .2rem; overflow-wrap: anywhere; }
+    pre { background: #172b24; color: #eef6f1; padding: 1rem; overflow-x: auto; border-radius: .5rem; }
+    pre code { background: none; padding: 0; color: inherit; overflow-wrap: normal; }
+    .flow { display: flex; align-items: stretch; gap: .75rem; flex-wrap: wrap; margin: 1rem 0; }
+    .flow .node { flex: 1 1 180px; border: 2px solid var(--green); border-radius: .5rem; padding: .9rem; background: white; }
+    .flow .arrow { align-self: center; font-size: 1.6rem; font-weight: bold; color: var(--green); }
+    li { margin: .35rem 0; }
+    :focus-visible { outline: 3px solid #ad5800; outline-offset: 3px; }
+    @media (max-width: 600px) { header h1 { font-size: 1.65rem; } .flow { flex-direction: column; } .flow .node { flex-basis: auto; } }
+    @media print { body { background: white; font-size: 11pt; } header { color: #172421; background: white; padding: 0; } main { padding: 0; } nav { display: none; } pre { white-space: pre-wrap; background: #eee; color: black; } a { color: inherit; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>A GitHub PBI Board in CrewBoard</h1>
+      <p>What is possible, where credentials belong, and what to decide before implementation.</p>
+      <p>Research and design discussion only &middot; November 3, 2026 &middot; No integration or settings changes implemented</p>
+    </div>
+  </header>
+  <main>
+    <nav aria-label="Contents">
+      <strong>In this guide</strong>
+      <ol>
+        <li><a href="#recommendation">The short answer</a></li>
+        <li><a href="#model">What GitHub means by a project</a></li>
+        <li><a href="#authentication">GitHub credentials and PATs</a></li>
+        <li><a href="#architectures">Architecture choices</a></li>
+        <li><a href="#configuration">Settings versus secrets</a></li>
+        <li><a href="#data">Fetching and displaying PBIs</a></li>
+        <li><a href="#reliability">Offline behavior and resource limits</a></li>
+        <li><a href="#scope">A sensible first release</a></li>
+        <li><a href="#decisions">Decision checklist and next steps</a></li>
+        <li><a href="#sources">Sources and further reading</a></li>
+      </ol>
+    </nav>
+
+    <section id="recommendation">
+      <h2>1. The short answer</h2>
+      <p><strong>Yes:</strong> CrewBoard could show a read-only PBI tab backed by a GitHub Project, with columns such as Backlog, Ready, In progress, In review, and Done. It could also display importance, effort, value, and links to the original issues.</p>
+      <div class="callout recommend">
+        <strong>Recommended starting direction:</strong> keep GitHub authoritative, show a small read-only board, and keep the GitHub token out of the browser. For local development, a server-side adapter is a natural experiment. For a CYD that must operate without a computer, evaluate a sanitized SD-card snapshot before committing to firmware-based GitHub access.
+      </div>
+      <p>The biggest choice is not the card layout. It is <strong>which trusted component can hold a secret and fetch GitHub data</strong>. A companion server simplifies this, but changes the deployment requirements. A snapshot preserves standalone operation, but is not live.</p>
+      <div class="callout warning">
+        <strong>Do not ask for a GitHub password.</strong> A PAT is itself a credential for API access; a username can identify the project owner, but a username/password pair is not needed alongside the token. Never ship a PAT in downloadable HTML, JavaScript, a static JSON settings file, or browser storage.
+      </div>
+    </section>
+
+    <section id="model">
+      <h2>2. A repository, a Project, and a PBI are different things</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>Identifiers the integration would need</caption>
+          <thead><tr><th>Concept</th><th>Meaning</th><th>CrewBoard implication</th></tr></thead>
+          <tbody>
+            <tr><td>Repository</td><td>For example, <code>RahsaanPringle/CrewBoardCYD</code>.</td><td>Contains issues and code. It can be a filter, not necessarily the owner of the Project.</td></tr>
+            <tr><td>Project owner</td><td>A GitHub user or organization.</td><td>Choose <code>user</code> or <code>organization</code> when locating the Project.</td></tr>
+            <tr><td>Project number</td><td>The number in a URL such as <code>github.com/users/OWNER/projects/NUMBER</code> or <code>github.com/orgs/OWNER/projects/NUMBER</code>.</td><td>Not an issue number, repository ID, or board-view number. Discover the opaque GraphQL node ID from it.</td></tr>
+            <tr><td>Project item</td><td>An issue, pull request, or draft item placed in the Project.</td><td>An issue can exist without being on the board. A draft might have no repository or issue URL.</td></tr>
+            <tr><td>Project fields</td><td>Status, effort, importance, value, and other custom fields.</td><td>These values are separate from issue labels and issue open/closed state.</td></tr>
+            <tr><td>Saved view</td><td>A GitHub board/table view with grouping, sorting, and filtering.</td><td>A Project item query does not automatically reproduce the saved view. CrewBoard must define its own grouping and filtering.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Important:</strong> the Markdown PBIs and checklist in this repository do not automatically become GitHub issues or Project items. Decide whether to create one issue per PBI and add those issues to the Project. Editing a Markdown checkbox does not automatically update Project Status.</p>
+      <p>For a first version, keep the full requirements in the existing PBI documents, link them from corresponding issues, and treat GitHub Project fields as the authoritative board metadata. Avoid inventing two-way Markdown synchronization.</p>
+      <p class="muted">The actual Project URL, owner type, number, field definitions, and visibility have not been inspected or assumed in this guide.</p>
+    </section>
+
+    <section id="authentication">
+      <h2>3. What credentials would be needed?</h2>
+      <p>GitHub's Projects automation guide documents the <strong>GraphQL API</strong> and classic PAT scopes <code>read:project</code> for queries and <code>project</code> for mutations. This proposal starts read-only; it should not request write privileges merely to display cards. See <a href="#source-api">the Projects API guide</a>.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Authentication options, subject to the actual Project and repository access</caption>
+          <thead><tr><th>Option</th><th>When it fits</th><th>Limitations</th></tr></thead>
+          <tbody>
+            <tr><td>Classic PAT</td><td>A bounded personal experiment, particularly a user-owned Project where fine-grained support is unavailable.</td><td>Use the minimum required scopes and an expiry. Private issue/PR content may require additional repository access; classic <code>repo</code> scope is broad. Do not silently expand privileges.</td></tr>
+            <tr><td>Fine-grained PAT</td><td>Prefer narrower permissions where the owner type and required API operations support them.</td><td>GitHub currently lists access to <strong>user-owned Projects</strong> as a limitation. For organization Projects, verify Projects read permission, repository issue/PR permissions, approval requirements, and actual API behavior before selecting it.</td></tr>
+            <tr><td>GitHub App</td><td>A more deliberate, multi-installation product with scoped permissions and short-lived access tokens.</td><td>More setup: installation, private-key storage, token issuance, and permission testing. Confirm support for the selected Project owner and operations; it is not automatically a drop-in solution for every personal Project.</td></tr>
+            <tr><td>Public web link only</td><td>An immediate navigation shortcut without importing cards.</td><td>No local board or offline data. GitHub controls sign-in and viewing. A public page does not mean the GraphQL API can be used without authentication.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Project visibility and issue visibility are separate.</strong> Seeing a Project does not guarantee a token can read every private issue inside it. Organization policy, SSO authorization, membership, token approval, and repository permissions can all affect results. Test with the real target before writing the integration.</p>
+      <h3>One integration identity versus each viewer's GitHub account</h3>
+      <p>The simplest design has one administrator-configured integration identity. CrewBoard viewers use their existing CrewBoard login, not personal GitHub tokens. This needs a deliberate authorization decision: <strong>the integration owner's GitHub access must not automatically become every staff member's access</strong>.</p>
+      <ul>
+        <li>Start owner-only unless the project is explicitly approved for crew-wide sharing.</li>
+        <li>Allowlist which project, repositories, fields, and items may be exposed.</li>
+        <li>Do not show private project titles, issue bodies, assignees, or metadata merely because the token can fetch them.</li>
+        <li>On disconnect or access revocation, stop refreshes and apply an explicit cache-removal policy; hiding the token alone does not remove previously cached private data.</li>
+      </ul>
+      <p>A per-user GitHub sign-in model is possible but is a different product scope, involving delegated authorization, user/token lifecycle, and per-user caching. Avoid a PAT-entry form for every crew member.</p>
+    </section>
+
+    <section id="architectures">
+      <h2>4. Where should GitHub access run?</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>Deployment trade-offs</caption>
+          <thead><tr><th>Approach</th><th>Advantages</th><th>Costs and cautions</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            <tr><td>Browser calls GitHub using a saved PAT</td><td>Little firmware work; the viewing device supplies internet.</td><td>Token is accessible to browser code, extensions, and the user. Local HTTP cannot protect token entry from network interception. CORS support would not solve secret exposure.</td><td><strong>Do not use as the shared deployment design.</strong></td></tr>
+            <tr><td>CYD calls GitHub over HTTPS</td><td>Standalone device; no companion computer.</td><td>PAT on removable SD storage; outbound TLS, trusted certificate/time handling, pagination, memory limits, blocking-server responsiveness, and firmware work. Incoming configuration over HTTP remains unsafe.</td><td>Investigate only if live, standalone GitHub access is essential.</td></tr>
+            <tr><td>Trusted companion service</td><td>Server-side secrets, shared cache, bounded GraphQL requests, easier diagnostics.</td><td>Requires an available PC, Raspberry Pi, NAS, or hosted service and an appropriate authentication/HTTPS deployment. Today's localhost development server is not a production service.</td><td><strong>Best first live-integration experiment.</strong></td></tr>
+            <tr><td>Sanitized JSON snapshot on SD</td><td>No GitHub PAT on the CYD; small offline-friendly data; no live GitHub TLS work in firmware.</td><td>A trusted exporter must fetch/filter data and refresh the snapshot. Freshness depends on manual copy or a future authenticated transfer. SD contents remain physically readable.</td><td><strong>Best standalone first version if periodic updates are acceptable.</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Live service: a protected adapter, not an open proxy</h3>
+      <div class="flow" aria-label="Proposed live integration data flow">
+        <div class="node"><strong>CrewBoard browser</strong><br>Authorized user sees cards. No GitHub PAT.</div>
+        <span class="arrow" aria-hidden="true">&rarr;</span>
+        <div class="node"><strong>Trusted adapter</strong><br>Authenticates viewer, filters fields, caches results, holds token.</div>
+        <span class="arrow" aria-hidden="true">&rarr;</span>
+        <div class="node"><strong>GitHub API</strong><br>Bounded read-only Project queries over verified HTTPS.</div>
+      </div>
+      <p>The response travels back through the same chain as a small sanitized payload. Prefer serving the page and adapter from one authenticated origin. A CYD-hosted page calling a separate service needs explicit client authorization and a narrowly scoped CORS policy; browser network restrictions and HTTP/HTTPS combinations must be tested. CrewBoard Basic credentials must not be forwarded to GitHub or unrelated hosts.</p>
+      <p>If the CYD consumes the companion's snapshot instead, define a separate authenticated device-to-service channel. Do not expose a network endpoint that hands private Project data to anyone on the LAN.</p>
+      <h3>Offline snapshot: separate export from display</h3>
+      <div class="flow" aria-label="Proposed snapshot data flow">
+        <div class="node"><strong>Trusted exporter</strong><br>Uses a token on the operator's computer.</div>
+        <span class="arrow" aria-hidden="true">&rarr;</span>
+        <div class="node"><strong>Sanitized JSON</strong><br>Only approved fields and items; includes fetched time.</div>
+        <span class="arrow" aria-hidden="true">&rarr;</span>
+        <div class="node"><strong>CYD + browser</strong><br>Authenticated read-only board with an explicit stale/offline label.</div>
+      </div>
+      <p>This snapshot is a <em>new proposed data/API surface</em>. The current firmware does not automatically serve arbitrary SD-card JSON paths. It would need a deliberately authenticated, bounded endpoint or allowlisted asset route. This guide does not add one.</p>
+    </section>
+
+    <section id="configuration">
+      <h2>5. Settings and secrets should not be the same file</h2>
+      <p>Your idea of storing repository and Project information in settings is sound. Keep non-secret selection settings separate from the token whenever the chosen host permits it.</p>
+      <pre><code>{
+  "githubBoard": {
+    "enabled": false,
+    "ownerType": "user",
+    "owner": "RahsaanPringle",
+    "projectNumber": null,
+    "repositoryFilter": ["RahsaanPringle/CrewBoardCYD"],
+    "audience": "owner",
+    "readOnly": true,
+    "refreshSeconds": 300,
+    "maxItems": 100,
+    "fields": {
+      "status": "Status",
+      "effort": "Effort",
+      "importance": "Importance",
+      "value": "Value"
+    }
+  }
+}</code></pre>
+      <p class="muted">Illustrative schema only, not configuration accepted by CrewBoard today. A null Project number intentionally prevents enabling an unknown project. Field names are examples, not claims about the existing board. Resolve them to field IDs during validation; repository filtering needs an explicit rule for drafts.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Proposed storage responsibilities</caption>
+          <thead><tr><th>Information</th><th>Reasonable home</th><th>Never expose through</th></tr></thead>
+          <tbody>
+            <tr><td>Owner, Project number, repository filter, audience, field mapping</td><td>Protected operator settings; only safe display metadata returned to authorized clients.</td><td>Unauthenticated configuration routes, especially when project identity is private.</td></tr>
+            <tr><td>PAT or GitHub App key</td><td>Companion host's credential store/secret manager; for an early local prototype, a process environment variable such as <code>CREWBOARD_GITHUB_TOKEN</code> supplied outside source control.</td><td>Browser JavaScript, <code>localStorage</code>, exported diagnostics, URLs, screenshots, command arguments, or committed JSON.</td></tr>
+            <tr><td>Sanitized cached items</td><td>Bounded service cache or protected SD snapshot, with source, fetch time, and schema version.</td><td>Public static folders or shared WebDAV when containing private board data.</td></tr>
+            <tr><td>Connection health</td><td>Owner settings can show configured/not configured, last successful refresh, and safe error category.</td><td>A response that includes the saved token, even masked except for a large prefix.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>If firmware must hold the token</h3>
+      <p>An SD-root protected configuration is less exposed than a web asset, but it is still plaintext on removable storage and in backups. Reading a private file in firmware is not encryption. A CYD-only design should preferably provision the credential offline rather than accepting a GitHub PAT over the current HTTP interface. Evaluate physical access, rotation, backups, logs, and device compromise before approving it.</p>
+      <h3>Token lifecycle</h3>
+      <ul>
+        <li>Use an expiring, least-privilege credential and document who owns rotation.</li>
+        <li>Show a clear expired/revoked/permission-denied state without printing the token.</li>
+        <li>Replacing a token must not reveal the old one; validate before switching the active connection.</li>
+        <li>Keep secret files and backups outside Git tracking. An ignore rule does not remove files already tracked.</li>
+        <li>If a real token reaches Git history or logs, revoke/rotate it first, then address retained copies. Deleting the visible file is not sufficient.</li>
+        <li>Restrict API destinations to the expected GitHub host; never accept an arbitrary fetch URL or follow a credential-bearing redirect to another origin.</li>
+      </ul>
+    </section>
+
+    <section id="data">
+      <h2>6. How the board data would be fetched</h2>
+      <p>A small adapter can locate a modern Project through <code>user(login: ...).projectV2(number: ...)</code> or the corresponding <code>organization</code> lookup. It can then read item content, selected custom-field values, and pagination information. Use query variables, not string concatenation of user-entered GraphQL.</p>
+      <pre><code>query ProjectIdentity($owner: String!, $number: Int!) {
+  user(login: $owner) {
+    projectV2(number: $number) {
+      id
+      title
+      url
+    }
+  }
+}</code></pre>
+      <p>This is a <strong>user-owned Project identity query</strong>, not the complete board implementation. An organization needs the organization root. A production query would also fetch the necessary item and field connections with explicit bounds and <code>pageInfo { hasNextPage endCursor }</code>.</p>
+      <h3>Suggested card mapping</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>What CrewBoard could show without copying full issue bodies</caption>
+          <thead><tr><th>Card element</th><th>Source and handling</th></tr></thead>
+          <tbody>
+            <tr><td>Title and source type</td><td>Issue, pull request, or draft title. Render as text, not untrusted HTML.</td></tr>
+            <tr><td>Column</td><td>Configured Status single-select option. Preserve configured ordering; missing values belong in an explicit Unassigned column.</td></tr>
+            <tr><td>Effort / importance / value</td><td>Mapped Project fields. Preserve missing values as unknown, not zero. Do not confuse value points with effort story points.</td></tr>
+            <tr><td>Repository and issue/PR number</td><td>Content metadata, not the Project item ID. Cross-repository cards need qualified names.</td></tr>
+            <tr><td>Open in GitHub</td><td>Validated GitHub issue/PR URL; drafts can link to the Project rather than an invented issue URL.</td></tr>
+            <tr><td>Last successful refresh</td><td>Adapter/export metadata. Label stale data visibly even when the cards still render.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>A board can span repositories. Apply the repository filter deliberately; decide whether to exclude drafts or offer an explicit draft inclusion setting.</li>
+        <li>Decide whether pull requests, archived items, and Done items are included. An issue being closed is not necessarily the same as its Project Status being Done.</li>
+        <li>Field names can be renamed and option names differ between projects. Resolve IDs and report mapping errors rather than silently placing everything in Backlog.</li>
+        <li>Handle missing/redacted content without assuming it is a deleted issue or requesting broader access automatically.</li>
+        <li>Escape titles and metadata. If rich issue bodies are ever added, treat Markdown/HTML sanitization as a separate requirement.</li>
+      </ul>
+    </section>
+
+    <section id="reliability">
+      <h2>7. Network failures, paging, and CYD limits</h2>
+      <p>GitHub becomes an optional online dependency; CrewBoard's schedule, roster, messages, locations, and shared files must continue working without it. Do not contact GitHub during every normal CrewBoard request or block startup while waiting for it.</p>
+      <ul>
+        <li><strong>Bound work:</strong> use small pages, a maximum total item count, response-byte caps, timeouts, and a maximum number of pages per refresh. Paginate nested field connections too if necessary.</li>
+        <li><strong>Report truncation:</strong> if the maximum is reached, show that only part of the board is displayed. Never imply that a partial list is complete.</li>
+        <li><strong>Cache once:</strong> share refresh results on the trusted adapter instead of multiplying GitHub requests by every browser. Five-minute polling is a starting hypothesis, not a requirement.</li>
+        <li><strong>Respect GitHub:</strong> inspect rate-limit headers, honor applicable retry instructions, and back off with jitter. Avoid automatic retry loops on invalid credentials.</li>
+        <li><strong>Check GraphQL errors:</strong> an HTTP 200 response may still contain <code>errors</code> and partial data. Validate the response before replacing a known-good cache.</li>
+        <li><strong>Keep stale state honest:</strong> last-known-good data may remain with a stale marker on network failure. Access revocation requires a stricter cache policy; do not retain private data indefinitely under an offline excuse.</li>
+        <li><strong>Budget separately:</strong> existing CrewBoard collection limits do not automatically define a new board endpoint. Set an explicit snapshot/API size cap after measuring representative cards and ESP32 RAM use.</li>
+        <li><strong>Verify HTTPS:</strong> never disable certificate verification to make firmware requests work. Plan certificate trust and clock initialization if the device makes TLS connections.</li>
+      </ul>
+      <p>A disconnected browser, a CYD without internet, and an unavailable companion are different failures. Test them independently. A public GraphQL board is not inherently an offline board.</p>
+    </section>
+
+    <section id="scope">
+      <h2>8. A sensible first release</h2>
+      <div class="card">
+        <h3>Read-only PBI tab</h3>
+        <ul>
+          <li>One configured Project, with an explicit approved audience.</li>
+          <li>Compact list or horizontally navigable board, usable on phones and keyboards.</li>
+          <li>Title, Status, effort, importance, value, and source link.</li>
+          <li>Visible loading, empty, not configured, permission-denied, stale, and refresh-failed states.</li>
+          <li>Manual refresh plus a bounded background policy where the architecture permits it.</li>
+          <li>Owner-only connection management; staff never receive or replace the GitHub credential.</li>
+          <li>No GitHub writes. Users open GitHub to edit or complete items.</li>
+        </ul>
+      </div>
+      <h3>Deliberately defer</h3>
+      <p>Drag-and-drop status changes, issue creation, comments, attachments, per-user GitHub sign-in, webhook hosting, and two-way synchronization of local Markdown checklists. They add write permissions, conflict handling, attribution, and substantially more failure modes.</p>
+      <p><strong>Completion checkboxes need special care:</strong> viewing a board read-only cannot update GitHub. A future &ldquo;mark complete&rdquo; control would require a separately approved write feature and a defined mapping to Project Status, issue closure, or both. These actions are not equivalent.</p>
+      <h3>How this relates to the existing backlog</h3>
+      <p>The <a href="PBI-prioritization.md">PBI roadmap</a> can help choose which documents to turn into issues. The <a href="PBI-research-role-based-abilities.md">access-profile research</a> should inform who can see private backlog content. The <a href="PBI-json-error-console.md">diagnostic console</a> must not record tokens, authorization headers, private query variables, or issue content from this integration.</p>
+    </section>
+
+    <section id="decisions">
+      <h2>9. Decisions to make before coding</h2>
+      <ol>
+        <li><strong>Which Project?</strong> Record the exact URL, owner type, number, visibility, and whether it is the modern Projects experience.</li>
+        <li><strong>Who can see it?</strong> Owner only, selected access profiles, or all authenticated crew? Which private information is intentionally shared?</li>
+        <li><strong>How fresh?</strong> Is a periodically exported snapshot sufficient, or must the CYD display live updates without a companion?</li>
+        <li><strong>Where does the token live?</strong> Trusted host, exporter, or physically provisioned CYD? Who rotates/revokes it?</li>
+        <li><strong>Which items?</strong> This repository only or several; issues only or also PRs/drafts; include Done and archived items?</li>
+        <li><strong>Which fields?</strong> Confirm the real Status options and types for importance, effort, and value.</li>
+        <li><strong>What happens offline?</strong> Choose a stale-data policy, maximum cache age, and private-cache removal behavior.</li>
+        <li><strong>What is the source of truth?</strong> Prefer GitHub for board state; define how Markdown requirements are linked without pretending they synchronize.</li>
+      </ol>
+      <h3>Recommended follow-on research spike</h3>
+      <p>Before a delivery PBI, validate a token from a trusted development process against the real Project. Produce a small sanitized sample payload, measure its size, test the selected owner/token combination, and choose live companion versus SD snapshot. This is a proposal for later work, not an instruction to paste a token into chat.</p>
+      <ul>
+        <li>Document actual minimum permissions and owner-type compatibility.</li>
+        <li>Demonstrate field mapping and pagination with missing/draft/private items.</li>
+        <li>Compare deployment dependencies and resource costs for both viable architectures.</li>
+        <li>Specify allowed audience, safe configuration, cache policy, and token rotation.</li>
+        <li>Write a scoped implementation PBI only after those decisions are approved.</li>
+      </ul>
+      <div class="callout recommend">
+        <strong>Bottom line:</strong> storing the Repo and Project selection is straightforward. Storing and using a PAT safely is the architectural decision. Start with a read-only board and keep the GitHub credential on the smallest trusted surface possible.
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>10. Sources and further reading</h2>
+      <p>Official documentation checked November 3, 2026. Permission support and service limits can change; verify them again against the actual Project during the research spike.</p>
+      <ol>
+        <li id="source-api"><a href="https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects">GitHub: Using the API to manage Projects</a> &mdash; GraphQL, authentication, user/organization lookup, fields and items.</li>
+        <li><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">GitHub: Managing personal access tokens</a> &mdash; token types, least privilege, expiration, and current fine-grained limitations, including user-owned Projects.</li>
+        <li><a href="https://docs.github.com/en/graphql/overview/rate-limits-and-query-limits-for-the-graphql-api">GitHub: GraphQL rate and query limits</a> &mdash; query costs, rate-limit headers, and request constraints.</li>
+        <li><a href="https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields/about-single-select-fields">GitHub: Single-select fields</a> &mdash; Project options and field configuration.</li>
+        <li><a href="local-development.md">CrewBoard local development and CYD deployment</a> &mdash; existing local-only host and deployment boundaries.</li>
+      </ol>
+      <p class="muted">This document does not inspect private GitHub data, request credentials, create a Project, or change the application. It is a decision aid for a future PBI.</p>
+    </section>
+  </main>
+</body>
+</html>

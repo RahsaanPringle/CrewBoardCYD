@@ -1,4 +1,10 @@
-OK, this is good. I have several PBIs in 'docs'.
-It would be great to get a document that lists the various PBIs, along with their difficulty, importance, and how much value you think they would add as points estimate.
+I have another idea for a PBI board on the Crew Board.
 
-You can use MarkDown, and I love Mermaid diagrams if they are appropeiate.
+It would accept the GitHub credentials and PAT, and show PBIs from the board.
+
+We would have to keep the PAT, Repo and Project info in a settings file of some sort.
+
+We're not ready to start coding yet.
+Let's get a document in HTML to help me get smart about it.
+
+Put it in the docs directory.
