@@ -1,5 +1,18 @@
 # Local development and CYD deployment
 
+## Documentation pages
+
+Standalone HTML documents live in `docs\SitePages` and can be opened directly in
+a browser without the development server. All pages load shared styles from
+`docs\SiteAssets\css\site.css` and shared behavior from
+`docs\SiteAssets\js\site.js`. Page-specific styles also live in the assets CSS
+folder to preserve each page's layout. The shared script makes overflowing
+tables keyboard-focusable; pages remain readable without JavaScript.
+
+Use `../SiteAssets/` for page asset URLs, `../` for Markdown documents in `docs`,
+and `../../` for repository-root resources. Data exports belong in
+`docs\SiteAssets\data`; they are not automatically loaded by the pages.
+
 ## Start locally
 
 Install Node.js 22 or newer, then run from the repository root:

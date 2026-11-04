@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+:where(.guide-page) {
+  background: #f4f6f5;
+  color: #172421;
+}
+
+:where(.guide-page) header {
+  background: var(--green);
+  color: #fff;
+  padding: 2rem 1.25rem;
+}
+
+:where(.guide-page) main {
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+:where(.guide-page) h2 {
+  color: var(--green);
+  margin-top: 2.5rem;
+  border-bottom: 2px solid var(--mint);
+}
+
+:where(.guide-page) a {
+  color: var(--green);
+}
+
+:where(.guide-page) table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+:where(.guide-page) th,
+:where(.guide-page) td {
+  text-align: left;
+  vertical-align: top;
+}
+
+:where(.guide-page) th {
+  background: var(--mint);
+}
+
+:where(.guide-page) pre {
+  padding: 1rem;
+  border-radius: .5rem;
+  overflow-x: auto;
+}
+
+:where(.guide-page) pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+:focus-visible {
+  outline: 3px solid #ad5800;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+}
