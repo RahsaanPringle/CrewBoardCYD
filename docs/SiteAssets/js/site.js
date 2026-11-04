@@ -1,6 +1,7 @@
 'use strict';
 
 const sitePages = [
+  ['crewboard-server.html', 'CrewBoard Server'],
   ['crewboard-small-business.html', 'About CrewBoard'],
   ['local-hostname-options.html', 'Local network names'],
   ['github-pbi-board-options.html', 'GitHub PBI board']
