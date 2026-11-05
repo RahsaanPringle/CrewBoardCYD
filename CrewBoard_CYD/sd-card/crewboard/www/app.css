@@ -24,6 +24,8 @@ html[data-crew-palette="classic"] {
 }
 html[data-crew-palette="classic"] body { background: #f4f6f5; color: #172421; }
 html[data-crew-palette="classic"] .card { border: 1px solid var(--crew-border); }
+html[data-crew-palette="classic"] .text-secondary { color: #56615d !important; }
+html[data-crew-palette="classic"] .btn-outline-secondary { --bs-btn-color: #56615d; }
 body { min-height: 100vh; }
 #record-modal { height: 100dvh; }
 #record-modal .modal-body { overscroll-behavior-y: contain; }
@@ -32,6 +34,15 @@ body { min-height: 100vh; }
 #record-modal .modal-content { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 .navbar { background: var(--crew-accent); }
 .navbar-brand { letter-spacing: .02em; }
+/* Use Bootstrap's semantic color pairs so status badges remain legible across themes. */
+.badge.text-bg-success { color: var(--bs-success-text-emphasis, #0a3622) !important; background-color: var(--bs-success-bg-subtle, #d1e7dd) !important; }
+.badge.text-bg-info { color: var(--bs-info-text-emphasis, #055160) !important; background-color: var(--bs-info-bg-subtle, #cff4fc) !important; }
+.badge.text-bg-warning { color: var(--bs-warning-text-emphasis, #664d03) !important; background-color: var(--bs-warning-bg-subtle, #fff3cd) !important; }
+.badge.text-bg-danger { color: var(--bs-danger-text-emphasis, #58151c) !important; background-color: var(--bs-danger-bg-subtle, #f8d7da) !important; }
+.badge.text-bg-secondary { color: var(--bs-secondary-text-emphasis, #2b2f32) !important; background-color: var(--bs-secondary-bg-subtle, #e2e3e5) !important; }
+.badge.text-bg-light { color: #212529 !important; background-color: #f8f9fa !important; }
+.badge.text-bg-success, .badge.text-bg-info, .badge.text-bg-warning,
+.badge.text-bg-danger, .badge.text-bg-secondary, .badge.text-bg-light { background-image: none; }
 .app-tabs { gap: .35rem; }
 .app-tabs .nav-link { color: var(--crew-accent); background: var(--crew-surface); border: 1px solid var(--crew-border); }
 .app-tabs .nav-link.active { color: var(--crew-accent-contrast); background: var(--crew-accent); border-color: var(--crew-accent); }

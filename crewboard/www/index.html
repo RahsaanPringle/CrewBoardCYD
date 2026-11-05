@@ -4,8 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#184c46">
+  <meta name="description" content="CrewBoard keeps your team's schedule, messages, roster, and business locations together on your local network.">
   <link rel="icon" href="data:,">
   <title>CrewBoard</title>
+  <style>
+    #theme-loading { display: none; }
+    html[data-crew-theme-pending] body > :not(#theme-loading) { visibility: hidden; }
+    html[data-crew-theme-pending] #theme-loading { display: flex; position: fixed; inset: 0; z-index: 2000; align-items: center; justify-content: center; background: #f4f6f5; color: #184c46; font: 600 1rem system-ui, sans-serif; }
+  </style>
   <script src="theme.js"></script>
   <script>
     // Loads the selected Bootstrap theme before app.css so app.css can layer on top of it.
@@ -14,6 +20,12 @@
       var DEFAULT_HREF = 'vendor/bootstrap.min.css';
       var VALID = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,59}\.css$/i;
       var root = document.documentElement;
+      var initialThemeTimer = window.setTimeout(function () {
+        initialThemeTimer = 0;
+        root.removeAttribute('data-crew-theme-pending');
+        console.warn('CrewBoard theme is taking too long to load; showing the page.');
+      }, 3000);
+      root.setAttribute('data-crew-theme-pending', '');
       var slot = document.head.appendChild(document.createComment(' theme stylesheet '));
       var current = null;
       function isValid(name) { return typeof name === 'string' && VALID.test(name) && name.indexOf('..') < 0; }
@@ -21,6 +33,12 @@
       function siteTheme() { return isValid(window.CREWBOARD_SITE_THEME) ? window.CREWBOARD_SITE_THEME : ''; }
       function resolve(choice) { return choice === 'classic' ? '' : (isValid(choice) ? choice : siteTheme()); }
       function setPalette(file) { if (file) root.removeAttribute('data-crew-palette'); else root.setAttribute('data-crew-palette', 'classic'); }
+      function finishInitialTheme() {
+        if (!initialThemeTimer) return;
+        window.clearTimeout(initialThemeTimer);
+        initialThemeTimer = 0;
+        root.removeAttribute('data-crew-theme-pending');
+      }
       function load(file, onError) {
         var previous = current;
         var link = document.createElement('link');
@@ -29,12 +47,15 @@
         link.onload = function () {
           setPalette(file);
           if (previous && previous.parentNode) previous.parentNode.removeChild(previous);
+          if (current === link) finishInitialTheme();
         };
         link.onerror = function () {
           if (link.parentNode) link.parentNode.removeChild(link);
           if (current !== link) return;
           current = previous;
-          if (!previous) { setPalette(''); load(''); }
+          console.warn('CrewBoard could not load the theme stylesheet: ' + (file || DEFAULT_HREF));
+          if (!previous && file) { setPalette(''); load(''); }
+          else if (!previous) finishInitialTheme();
           if (onError) onError(file);
         };
         current = link;
@@ -52,6 +73,7 @@
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <div id="theme-loading" role="status">Loading CrewBoard...</div>
   <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container-fluid container-xl">
       <a class="navbar-brand fw-semibold" href="#">CrewBoard</a>

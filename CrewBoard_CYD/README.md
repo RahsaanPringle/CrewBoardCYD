@@ -159,7 +159,9 @@ CrewBoard can swap the bundled Bootstrap stylesheet for any Bootstrap 5.3 theme,
 2. Optional: set the site-wide default by adding `"theme": "vapor.min.css"` to `/config.json`. The setting is read at startup and whenever a roster login is saved. Leave it empty or remove it to use the classic CrewBoard look.
 3. Each browser can override the site default with the theme menu in the top bar. The choice is saved in that browser only. **CrewBoard classic** always uses the bundled Bootstrap stylesheet and green palette.
 
-The theme replaces `vendor/bootstrap.min.css` rather than loading on top of it, so only one large stylesheet is downloaded. When a custom theme is active, `app.css` takes its colors from the theme's Bootstrap variables. If a theme file is missing, the browser falls back to the classic look. Up to 40 theme files are listed.
+The theme replaces `vendor/bootstrap.min.css` rather than loading on top of it, so only one large stylesheet is downloaded. When a custom theme is active, `app.css` takes its colors from the theme's Bootstrap variables, including high-contrast semantic colors for status badges. If a theme file is missing, the browser falls back to the classic look. Up to 40 theme files are listed.
+
+On page load, a loading message prevents the unstyled interface from jumping while the theme loads. If loading takes more than three seconds, the page is shown while the theme continues loading; data requests continue during the wait.
 
 ## Known limitations
 
