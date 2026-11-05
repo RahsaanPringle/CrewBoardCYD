@@ -69,8 +69,11 @@ function fixture(asset, { saved = null, failure, missingPane, disabledTab } = {}
       };
     }
   });
-  vm.runInNewContext(fs.readFileSync(new URL('app.js', new URL(asset, import.meta.url)), 'utf8'), context);
-  return { buttons, writes, warnings, requests, shown, mapRenders, emit };
+  const source = fs.readFileSync(new URL('app.js', new URL(asset, import.meta.url)), 'utf8').replace(
+    '})(jQuery);', 'window.tabTestState = state; })(jQuery);'
+  );
+  vm.runInNewContext(source, context);
+  return { buttons, writes, warnings, requests, shown, mapRenders, emit, state: window.tabTestState };
 }
 
 for (const asset of assets) {
@@ -113,6 +116,7 @@ for (const asset of assets) {
     for (const failure of ['access', 'read', 'write']) {
       const f = fixture(asset, { failure });
       assert.deepEqual(f.shown, []);
+      assert.equal(f.state.scheduleView, 'calendar');
       f.emit(f.buttons[3]);
       assert.equal(f.mapRenders.length, 1);
       assert.deepEqual(f.writes, failure === 'read' ? [['crewboard.activeTab', '#locations-pane']] : []);
@@ -123,5 +127,17 @@ for (const asset of assets) {
     assert.deepEqual(f.shown, [f.buttons[1]]);
     assert.deepEqual(f.writes, []);
     assert.equal(f.warnings.length, 1);
+  });
+
+  test(`${asset} restores Schedule with Calendar and retains its subview while switching tabs`, () => {
+    const f = fixture(asset, { saved: '#schedule-pane' });
+    assert.equal(f.state.scheduleView, 'calendar');
+    assert.equal(f.state.selectedDay, '');
+    f.state.scheduleView = 'list';
+    f.state.selectedDay = '2024-02-29';
+    f.emit(f.buttons[1]);
+    f.emit(f.buttons[0]);
+    assert.equal(f.state.scheduleView, 'list');
+    assert.equal(f.state.selectedDay, '2024-02-29');
   });
 }
