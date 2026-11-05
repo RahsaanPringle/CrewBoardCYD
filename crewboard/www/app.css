@@ -62,10 +62,22 @@ button.calendar-day:hover { border-color: var(--crew-accent); }
 .calendar-blank { background: transparent; border-color: transparent; }
 .calendar-day.is-today .calendar-number { background: var(--crew-highlight); color: #1f2a27; border-radius: 50%; }
 .calendar-day.is-selected { outline: 2px solid var(--crew-accent); outline-offset: -2px; }
+button.calendar-day:focus-visible, #schedule-list-heading:focus { outline: 3px solid var(--crew-accent); outline-offset: 2px; z-index: 1; }
 .calendar-number { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; font-weight: 600; font-size: .85rem; }
-.calendar-count { display: none; position: absolute; right: .25rem; top: .25rem; min-width: 1.2rem; padding: 0 .3rem; border-radius: 1rem; background: var(--crew-accent); color: var(--crew-accent-contrast); font-size: .7rem; text-align: center; }
+.calendar-count { display: block; position: absolute; right: .25rem; top: .25rem; min-width: 1.2rem; padding: 0 .3rem; border-radius: 1rem; background: var(--crew-accent); color: var(--crew-accent-contrast); font-size: .7rem; text-align: center; }
 .calendar-job { display: block; padding: .05rem .3rem; border-radius: .25rem; background: var(--crew-accent-soft); color: var(--crew-accent-soft-text); font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .calendar-more { font-size: .7rem; color: var(--crew-muted); }
 .empty-state { padding: 2rem; text-align: center; color: var(--crew-muted); background: var(--crew-surface); border: 1px dashed var(--crew-border-strong); border-radius: .75rem; }
 textarea { min-height: 7rem; }
-@media (max-width: 575.98px) { .app-tabs { display: grid; grid-template-columns: 1fr 1fr; } .location-map { height: 300px; } .calendar-day { min-height: 3.25rem; } .calendar-jobs { display: none; } .calendar-count { display: block; } .message-reply { margin-left: .4rem; padding-left: .6rem; } }
+@media (max-width: 575.98px) {
+  .app-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .location-map { height: 300px; }
+  #schedule-calendar { margin-inline: -.5rem; }
+  .calendar-card .card-body { padding: .375rem; }
+  .calendar-grid { gap: .1rem; }
+  .calendar-day { align-items: center; min-height: 3.25rem; padding: .15rem; }
+  .calendar-number { font-size: .9rem; }
+  .calendar-jobs { display: none; }
+  .calendar-count { position: static; line-height: 1rem; }
+  .message-reply { margin-left: .4rem; padding-left: .6rem; }
+}

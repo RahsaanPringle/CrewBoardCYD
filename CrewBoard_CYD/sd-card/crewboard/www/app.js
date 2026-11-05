@@ -7,7 +7,7 @@
   const TILE_SIZE = 256;
   const state = {
     session: null, roster: [], locations: [], schedule: [], messages: [], accounts: [],
-    scheduleView: 'list', calendarMonth: null, selectedDay: ''
+    scheduleView: 'calendar', calendarMonth: null, selectedDay: ''
   };
   const modal = new bootstrap.Modal(document.getElementById('record-modal'));
   let editing = { kind: '', id: '', parentId: '' };
@@ -29,7 +29,20 @@
       Number.isFinite(Number(location.latitude)) && Number.isFinite(Number(location.longitude));
   }
   function pad2(value) { return String(value).padStart(2, '0'); }
-  function dateKey(date) { return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate()); }
+  function dateKey(date) { return String(date.getFullYear()).padStart(4, '0') + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate()); }
+  function localDate(year, month, day) {
+    const date = new Date(0);
+    date.setHours(12, 0, 0, 0);
+    date.setFullYear(year, month, day);
+    return date;
+  }
+  function scheduleDate(value) {
+    const parts = value.split('-').map(Number);
+    return localDate(parts[0], parts[1] - 1, parts[2]);
+  }
+  function scheduleDateLabel(value) {
+    return scheduleDate(value).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
   function localTimestamp() { const now = new Date(); return dateKey(now) + 'T' + pad2(now.getHours()) + ':' + pad2(now.getMinutes()); }
 
   function showAlert(message, type) {
@@ -96,49 +109,101 @@
   function jobCard(job) {
     const date = formatDate(job.date);
     const crew = (job.crewIds || []).map(employeeName).join(', ') || 'Unassigned';
-    return '<div class="col-12"><article class="card shadow-sm"><div class="card-body d-flex flex-column flex-sm-row gap-3"><div class="job-date"><small>' + escapeHtml(date.month) + '</small><strong>' + escapeHtml(date.day) + '</strong></div><div class="flex-grow-1"><div class="d-flex flex-wrap justify-content-between gap-2"><div><h3 class="h5 mb-1">' + escapeHtml(job.title) + '</h3><p class="text-secondary mb-2">' + escapeHtml(date.full) + ' · ' + escapeHtml(job.startTime || '') + (job.endTime ? '–' + escapeHtml(job.endTime) : '') + '</p></div>' + actionButtons('schedule', job.id) + '</div><p class="mb-1"><strong>Location:</strong> ' + escapeHtml(locationName(job.locationId)) + '</p><p class="mb-1"><strong>Crew:</strong> ' + escapeHtml(crew) + '</p>' + (job.notes ? '<p class="mb-0 mt-2">' + escapeHtml(job.notes) + '</p>' : '') + '</div></div></article></div>';
+    return '<div class="col-12"><article class="card shadow-sm"><div class="card-body d-flex flex-column flex-sm-row gap-3"><div class="job-date"><small>' + escapeHtml(date.month) + '</small><strong>' + escapeHtml(date.day) + '</strong></div><div class="flex-grow-1"><div class="d-flex flex-wrap justify-content-between gap-2"><div><h4 class="h5 mb-1">' + escapeHtml(job.title) + '</h4><p class="text-secondary mb-2">' + escapeHtml(date.full) + ' · ' + escapeHtml(job.startTime || '') + (job.endTime ? '–' + escapeHtml(job.endTime) : '') + '</p></div>' + actionButtons('schedule', job.id) + '</div><p class="mb-1"><strong>Location:</strong> ' + escapeHtml(locationName(job.locationId)) + '</p><p class="mb-1"><strong>Crew:</strong> ' + escapeHtml(crew) + '</p>' + (job.notes ? '<p class="mb-0 mt-2">' + escapeHtml(job.notes) + '</p>' : '') + '</div></div></article></div>';
   }
 
-  function sortedJobs() { return state.schedule.slice().sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime)); }
+  function sortedJobs() {
+    return state.schedule.slice().sort((a, b) =>
+      String(a.date || '').localeCompare(String(b.date || '')) ||
+      String(a.startTime || '').localeCompare(String(b.startTime || '')) ||
+      String(a.title || '').localeCompare(String(b.title || '')) ||
+      String(a.id || '').localeCompare(String(b.id || '')));
+  }
 
   function renderSchedule() {
-    const cards = sortedJobs().map(jobCard);
-    $('#schedule-list').html(cards.length ? cards.join('') : '<div class="col-12">' + empty('No jobs have been scheduled.') + '</div>');
-    $('#schedule-list').toggleClass('d-none', state.scheduleView !== 'list');
-    $('#schedule-calendar').toggleClass('d-none', state.scheduleView !== 'calendar');
+    const list = state.scheduleView === 'list';
+    if (list && !state.selectedDay) state.selectedDay = dateKey(new Date());
+    $('#schedule-list').toggleClass('d-none', !list);
+    $('#schedule-calendar').toggleClass('d-none', list);
     $('.schedule-view').each(function () { $(this).toggleClass('active', $(this).data('view') === state.scheduleView).attr('aria-pressed', $(this).data('view') === state.scheduleView); });
-    if (state.scheduleView === 'calendar') renderCalendar();
+    if (!list) { renderCalendar(); return; }
+    const label = scheduleDateLabel(state.selectedDay);
+    const cards = sortedJobs().filter((job) => job.date === state.selectedDay).map(jobCard);
+    $('#schedule-list-heading').text('Jobs for ' + label);
+    $('#schedule-list-cards').html(cards.length ? cards.join('') : '<div class="col-12">' + empty('No jobs are scheduled for ' + label + '.') + '</div>');
   }
 
   function renderCalendar() {
     const today = new Date();
-    if (!state.calendarMonth) state.calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    if (!state.selectedDay) state.selectedDay = dateKey(today);
+    if (!state.calendarMonth) state.calendarMonth = localDate(today.getFullYear(), today.getMonth(), 1);
     const month = state.calendarMonth;
-    const jobsByDay = {};
-    sortedJobs().forEach((job) => { (jobsByDay[job.date] = jobsByDay[job.date] || []).push(job); });
+    const todayKey = dateKey(today);
+    const jobsByDay = new Map();
+    sortedJobs().forEach((job) => {
+      const jobs = jobsByDay.get(job.date) || [];
+      jobs.push(job);
+      jobsByDay.set(job.date, jobs);
+    });
 
     const weekdays = [];
-    for (let i = 0; i < 7; i += 1) weekdays.push('<div class="calendar-weekday">' + escapeHtml(new Date(2023, 0, 1 + i).toLocaleDateString(undefined, { weekday: 'short' })) + '</div>');
+    for (let i = 0; i < 7; i += 1) weekdays.push('<div class="calendar-weekday">' + escapeHtml(localDate(2023, 0, 1 + i).toLocaleDateString(undefined, { weekday: 'short' })) + '</div>');
     const cells = [];
     for (let i = 0; i < month.getDay(); i += 1) cells.push('<div class="calendar-day calendar-blank" aria-hidden="true"></div>');
-    const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    const daysInMonth = localDate(month.getFullYear(), month.getMonth() + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day += 1) {
-      const key = dateKey(new Date(month.getFullYear(), month.getMonth(), day));
-      const jobs = jobsByDay[key] || [];
+      const key = dateKey(localDate(month.getFullYear(), month.getMonth(), day));
+      const jobs = jobsByDay.get(key) || [];
       const chips = jobs.slice(0, 3).map((job) => '<span class="calendar-job" title="' + escapeHtml(job.title + ' · ' + locationName(job.locationId)) + '">' + escapeHtml((job.startTime || '') + ' ' + job.title) + '</span>').join('') + (jobs.length > 3 ? '<span class="calendar-more">+' + (jobs.length - 3) + ' more</span>' : '');
-      const classes = 'calendar-day' + (key === dateKey(today) ? ' is-today' : '') + (key === state.selectedDay ? ' is-selected' : '') + (jobs.length ? ' has-jobs' : '');
-      cells.push('<button type="button" class="' + classes + '" data-date="' + key + '" aria-label="' + escapeHtml(formatDate(key).full + ', ' + jobs.length + ' job(s)') + '"><span class="calendar-number">' + day + '</span>' + (jobs.length ? '<span class="calendar-count">' + jobs.length + '</span>' : '') + '<span class="calendar-jobs">' + chips + '</span></button>');
+      const selected = key === state.selectedDay;
+      const classes = 'calendar-day' + (key === todayKey ? ' is-today' : '') + (selected ? ' is-selected' : '') + (jobs.length ? ' has-jobs' : '');
+      const label = scheduleDateLabel(key) + ', ' + jobs.length + ' scheduled ' + (jobs.length === 1 ? 'job' : 'jobs');
+      cells.push('<button type="button" class="' + classes + '" data-date="' + key + '" aria-label="' + escapeHtml(label) +
+        '" aria-pressed="' + selected + '"' + (key === todayKey ? ' aria-current="date"' : '') + '><span class="calendar-number">' + day + '</span>' +
+        (jobs.length ? '<span class="calendar-count">' + jobs.length + '</span>' : '') + '<span class="calendar-jobs">' + chips + '</span></button>');
     }
-    const selectedJobs = jobsByDay[state.selectedDay] || [];
     const label = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const firstMonth = month.getFullYear() === 1 && month.getMonth() === 0;
+    const lastMonth = month.getFullYear() === 9999 && month.getMonth() === 11;
     $('#schedule-calendar').html(
-      '<div class="card shadow-sm"><div class="card-body">' +
-      '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h3 class="h5 mb-0">' + escapeHtml(label) + '</h3><div class="btn-group" role="group" aria-label="Change month"><button type="button" class="btn btn-sm btn-outline-secondary calendar-nav" data-step="-1" aria-label="Previous month">‹</button><button type="button" class="btn btn-sm btn-outline-secondary calendar-nav" data-step="0">Today</button><button type="button" class="btn btn-sm btn-outline-secondary calendar-nav" data-step="1" aria-label="Next month">›</button></div></div>' +
-      '<div class="calendar-grid">' + weekdays.join('') + cells.join('') + '</div></div></div>' +
-      '<h3 class="h5 mt-4 mb-3">' + escapeHtml(formatDate(state.selectedDay).full) + '</h3>' +
-      '<div class="row g-3">' + (selectedJobs.length ? selectedJobs.map(jobCard).join('') : '<div class="col-12">' + empty('No jobs on this day.') + '</div>') + '</div>'
+      '<div class="card shadow-sm calendar-card"><div class="card-body">' +
+      '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h3 class="h5 mb-0">' + escapeHtml(label) + '</h3><div class="btn-group" role="group" aria-label="Change month"><button type="button" class="btn btn-sm btn-outline-secondary calendar-nav" data-step="-1" aria-label="Previous month"' + (firstMonth ? ' disabled' : '') + '>‹</button><button type="button" class="btn btn-sm btn-outline-secondary calendar-nav" data-step="0" aria-label="Show current month without changing the selected date">Current month</button><button type="button" class="btn btn-sm btn-outline-secondary calendar-nav" data-step="1" aria-label="Next month"' + (lastMonth ? ' disabled' : '') + '>›</button></div></div>' +
+      '<p class="small text-secondary mb-2">Today is filled; the selected date is outlined.</p>' +
+      '<div class="calendar-grid">' + weekdays.join('') + cells.join('') + '</div></div></div>'
     );
+  }
+
+  function setScheduleView(view) {
+    const returningToCalendar = view === 'calendar' && state.scheduleView !== 'calendar';
+    if (view === 'list' && !state.selectedDay) state.selectedDay = dateKey(new Date());
+    if (returningToCalendar && state.selectedDay) {
+      const selected = scheduleDate(state.selectedDay);
+      state.calendarMonth = localDate(selected.getFullYear(), selected.getMonth(), 1);
+    }
+    state.scheduleView = view;
+    renderSchedule();
+    if (view === 'list') document.getElementById('schedule-list-heading').focus();
+    else if (returningToCalendar && state.selectedDay) {
+      const selected = document.querySelector('#schedule-calendar [data-date="' + state.selectedDay + '"]');
+      if (selected) selected.focus();
+    }
+  }
+
+  function selectScheduleDay(day) {
+    state.selectedDay = day;
+    setScheduleView('list');
+  }
+
+  function navigateCalendar(step) {
+    const today = new Date();
+    const month = step === 0 ? localDate(today.getFullYear(), today.getMonth(), 1) :
+      localDate(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + step, 1);
+    if (month.getFullYear() < 1 || month.getFullYear() > 9999) return;
+    state.calendarMonth = month;
+    renderCalendar();
+    const button = document.querySelector('#schedule-calendar .calendar-nav[data-step="' + step + '"]');
+    const fallback = document.querySelector('#schedule-calendar .calendar-nav[data-step="0"]');
+    if (button && !button.disabled) button.focus();
+    else if (fallback) fallback.focus();
   }
 
   // ---------- Messages ----------
@@ -448,8 +513,9 @@
       title = id ? 'Edit job' : 'Add job';
       const locations = state.locations.map((item) => '<option value="' + escapeHtml(item.id) + '" ' + (record.locationId === item.id ? 'selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
       const crew = state.roster.filter((item) => item.active || (record.crewIds || []).includes(item.id)).map((item) => '<option value="' + escapeHtml(item.id) + '" ' + ((record.crewIds || []).includes(item.id) ? 'selected' : '') + '>' + escapeHtml(item.name) + (item.role ? ' — ' + escapeHtml(item.role) : '') + '</option>').join('');
+      const jobDate = id ? record.date : (state.selectedDay || (state.scheduleView === 'calendar' ? dateKey(new Date()) : ''));
       fields = field('title', 'Job title', 'text', record.title, { required: true, maxlength: 80 }) +
-        '<div class="row"><div class="col-md-4">' + field('date', 'Date', 'date', record.date || (state.scheduleView === 'calendar' ? state.selectedDay : ''), { required: true, min: '0001-01-01', max: '9999-12-31' }) +
+        '<div class="row"><div class="col-md-4">' + field('date', 'Date', 'date', jobDate, { required: true, min: '0001-01-01', max: '9999-12-31' }) +
         '</div><div class="col-md-4">' + field('startTime', 'Start time', 'time', record.startTime, { required: true, step: 60 }) +
         '</div><div class="col-md-4">' + field('endTime', 'End time (optional)', 'time', record.endTime, { step: 60, help: 'End time cannot be earlier than start time.' }) +
         '</div></div><div class="mb-3"><label class="form-label" for="field-locationId">Business location</label><select class="form-select" id="field-locationId" name="locationId" required><option value="">Choose a location</option>' + locations +
@@ -488,6 +554,10 @@
       const match = editorTriggerMatch;
       trigger = Array.from(document.getElementsByClassName(match.action)).find((element) =>
         (element.dataset.kind || '') === match.kind && (element.dataset.id || '') === match.id);
+    }
+    if ((!trigger || !trigger.getClientRects().length) && editorTriggerMatch &&
+        editorTriggerMatch.kind === 'schedule' && state.scheduleView === 'list') {
+      trigger = document.getElementById('schedule-list-heading');
     }
     if (!trigger || !trigger.getClientRects().length) trigger = document.querySelector('#section-tabs .active');
     if (trigger) trigger.focus({ preventScroll: true });
@@ -544,6 +614,10 @@
     const record = byId(kind, id);
     saveCollection(kind, state[kind].filter((item) => item.id !== id)).done(() => {
       if (kind === 'roster') saveRosterAccount({ id: id, username: '' }, (record && record.username) || '', '');
+      if (kind === 'schedule' && state.scheduleView === 'list') {
+        const heading = document.getElementById('schedule-list-heading');
+        if (heading.getClientRects().length) heading.focus();
+      }
     });
   }
 
@@ -596,14 +670,9 @@
   $(document).on('click', '.toggle-coordinate-sign', function () {
     toggleCoordinateSign(document.getElementById(this.dataset.target));
   });
-  $(document).on('click', '.schedule-view', function () { state.scheduleView = $(this).data('view'); renderSchedule(); });
-  $(document).on('click', '.calendar-day[data-date]', function () { state.selectedDay = $(this).data('date'); renderCalendar(); });
-  $(document).on('click', '.calendar-nav', function () {
-    const step = Number($(this).data('step'));
-    const today = new Date();
-    if (step === 0) { state.calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1); state.selectedDay = dateKey(today); } else { state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + step, 1); }
-    renderCalendar();
-  });
+  $(document).on('click', '.schedule-view', function () { setScheduleView($(this).data('view')); });
+  $(document).on('click', '.calendar-day[data-date]', function () { selectScheduleDay($(this).data('date')); });
+  $(document).on('click', '.calendar-nav', function () { navigateCalendar(Number($(this).data('step'))); });
   function initializeTabs() {
     const storageKey = 'crewboard.activeTab';
     const buttons = Array.from(document.querySelectorAll('#section-tabs button[data-bs-target]'));
