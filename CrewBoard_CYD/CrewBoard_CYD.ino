@@ -14,7 +14,10 @@
 constexpr uint16_t serverPort = 80;
 constexpr uint8_t sdChipSelectPin = 5;
 constexpr uint8_t backlightPin = 21;
-constexpr uint8_t maxUserCount = 12;
+constexpr uint8_t maxUserCount = 50;
+constexpr uint8_t maxCrewAssignments = 12;
+constexpr size_t configDocumentCapacity = 24576;
+constexpr size_t accountsDocumentCapacity = 16384;
 constexpr uint8_t statusLineCount = 7;
 constexpr size_t transferBufferSize = 1024;
 constexpr size_t maxApiBodySize = 24576;
@@ -309,7 +312,7 @@ bool streamFile(WiFiClient& client, const String& path, bool headOnly, const Str
 }
 
 String collectionPath(const String& collection) {
-  if (collection == "roster" || collection == "locations" || collection == "schedule" || collection == "messages") {
+  if (collection == "roster" || collection == "customers" || collection == "locations" || collection == "schedule" || collection == "messages") {
     return String(dataRoot) + "/" + collection + ".json";
   }
   return "";
@@ -317,6 +320,7 @@ String collectionPath(const String& collection) {
 
 size_t collectionLimit(const String& collection) {
   if (collection == "roster") return 50;
+  if (collection == "customers") return 100;
   if (collection == "locations") return 100;
   if (collection == "schedule") return 250;
   if (collection == "messages") return 200;
@@ -412,6 +416,14 @@ bool validateCollection(const String& collection, JsonDocument& document, String
                             "Enter a valid email address.", previous, error) ||
           !validOrPreserved(!strchr(username, ':'), collection, record, "username", nullptr,
                             "A username cannot contain a colon.", previous, error)) return false;
+    } else if (collection == "customers") {
+      if (!validText(record["name"], 80) || !record["locationIds"].is<JsonArray>()) {
+        error = "A customer record is invalid."; return false;
+      }
+      if (record["locationIds"].as<JsonArray>().size() > 100) { error = "A customer has too many locations."; return false; }
+      for (JsonVariantConst id : record["locationIds"].as<JsonArrayConst>()) {
+        if (!validText(id, 64)) { error = "A customer location ID is invalid."; return false; }
+      }
     } else if (collection == "locations") {
       if (!validText(record["name"], 80) || !validText(record["address"], 120) || !validText(record["city"], 60) || !validText(record["region"], 30, false) || !validText(record["postalCode"], 16, false)) { error = "A location record is invalid."; return false; }
       if (!record["latitude"].is<float>() || !record["longitude"].is<float>()) {
@@ -423,7 +435,7 @@ bool validateCollection(const String& collection, JsonDocument& document, String
       if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) { error = "Location coordinates are out of range."; return false; }
     } else if (collection == "schedule") {
       if (!validText(record["title"], 80) || !validText(record["date"], 10) || !validText(record["startTime"], 5) || !validText(record["endTime"], 5, false) || !validText(record["locationId"], 64) || !validText(record["notes"], 500, false) || !record["crewIds"].is<JsonArray>()) { error = "A schedule record is invalid."; return false; }
-      if (record["crewIds"].as<JsonArray>().size() > maxUserCount) { error = "A job has too many crew assignments."; return false; }
+      if (record["crewIds"].as<JsonArray>().size() > maxCrewAssignments) { error = "A job has too many crew assignments."; return false; }
       const char* date = record["date"] | "";
       const char* start = record["startTime"] | "";
       const char* end = record["endTime"] | "";
@@ -482,6 +494,38 @@ bool installTemporaryFile(const String& temporaryPath, const String& finalPath) 
   return false;
 }
 
+bool validateCustomerLocations(const String& collection, JsonDocument& document, String& error) {
+  if (collection != "customers" && collection != "locations") return true;
+  const String otherPath = collectionPath(collection == "customers" ? "locations" : "customers");
+  DynamicJsonDocument other(jsonDocumentCapacity);
+  if (SD.exists(otherPath)) {
+    File file = SD.open(otherPath, FILE_READ);
+    if (!file || file.isDirectory()) {
+      if (file) file.close();
+      error = "Could not read the linked records."; return false;
+    }
+    const DeserializationError result = deserializeJson(other, file);
+    file.close();
+    if (result || !other.is<JsonArray>()) { error = "Could not read the linked records."; return false; }
+  } else {
+    other.to<JsonArray>();
+  }
+  JsonArrayConst customers = collection == "customers" ? document.as<JsonArrayConst>() : other.as<JsonArrayConst>();
+  JsonArrayConst locations = collection == "locations" ? document.as<JsonArrayConst>() : other.as<JsonArrayConst>();
+  for (JsonObjectConst customer : customers) {
+    if (!customer["locationIds"].is<JsonArrayConst>()) { error = "A customer record is invalid."; return false; }
+    for (JsonVariantConst id : customer["locationIds"].as<JsonArrayConst>()) {
+      if (!id.is<const char*>()) { error = "A customer location ID is invalid."; return false; }
+      bool found = false;
+      for (JsonObjectConst location : locations) {
+        if (strcmp(id.as<const char*>(), location["id"] | "") == 0) { found = true; break; }
+      }
+      if (!found) { error = "A customer references a missing location."; return false; }
+    }
+  }
+  return true;
+}
+
 void handleApiPut(WiFiClient& client, const HttpRequest& request, const String& collection) {
   if (!request.isAdmin) { sendJsonError(client, 403, "Forbidden", "Administrator access is required to change records."); return; }
   if (request.crewBoardHeader != "1") { sendJsonError(client, 403, "Forbidden", "Missing same-origin request marker."); return; }
@@ -504,7 +548,8 @@ void handleApiPut(WiFiClient& client, const HttpRequest& request, const String& 
   const DeserializationError jsonError = deserializeJson(document, temporary);
   temporary.close();
   String validationError;
-  if (jsonError || !validateCollection(collection, document, validationError)) {
+  if (jsonError || !validateCollection(collection, document, validationError) ||
+      !validateCustomerLocations(collection, document, validationError)) {
     SD.remove(temporaryPath);
     sendJsonError(client, 422, "Unprocessable Content", jsonError ? "The request is not valid JSON." : validationError);
     return;
@@ -519,12 +564,15 @@ void handleApiPut(WiFiClient& client, const HttpRequest& request, const String& 
 }
 
 void sendAccountsJson(WiFiClient& client) {
-  DynamicJsonDocument document(2048);
+  DynamicJsonDocument document(accountsDocumentCapacity);
   JsonArray accounts = document.to<JsonArray>();
   for (uint8_t i = 0; i < userCount; ++i) {
     JsonObject account = accounts.add<JsonObject>();
     account["employeeId"] = users[i].employeeId;
     account["username"] = users[i].username;
+  }
+  if (document.overflowed()) {
+    sendJsonError(client, 500, "Internal Server Error", "Not enough memory to list staff logins."); return;
   }
   String body;
   serializeJson(document, body);
@@ -575,7 +623,7 @@ void handleAccountPut(WiFiClient& client, const HttpRequest& request) {
 
   File configFile = SD.open(primaryConfigPath, FILE_READ);
   if (!configFile || configFile.isDirectory()) { if (configFile) configFile.close(); sendJsonError(client, 500, "Internal Server Error", "Could not open /config.json."); return; }
-  DynamicJsonDocument configDocument(6144);
+  DynamicJsonDocument configDocument(configDocumentCapacity);
   const DeserializationError configError = deserializeJson(configDocument, configFile);
   configFile.close();
   if (configError) { sendJsonError(client, 500, "Internal Server Error", "The configuration file is invalid."); return; }
@@ -618,6 +666,9 @@ void handleAccountPut(WiFiClient& client, const HttpRequest& request) {
     configuredUser["password"] = password;
   }
 
+  if (configDocument.overflowed()) {
+    sendJsonError(client, 500, "Internal Server Error", "Not enough memory to update the configuration."); return;
+  }
   const String temporaryPath = String(primaryConfigPath) + ".tmp";
   if (SD.exists(temporaryPath)) SD.remove(temporaryPath);
   File temporaryFile = SD.open(temporaryPath, FILE_WRITE);
@@ -1092,7 +1143,7 @@ void handleClient(WiFiClient& client) {
 bool loadConfiguration() {
   File file = SD.open(primaryConfigPath, FILE_READ);
   if (!file || file.isDirectory()) { if (file) file.close(); logEvent("Missing /config.json"); return false; }
-  DynamicJsonDocument document(4096);
+  DynamicJsonDocument document(configDocumentCapacity);
   const DeserializationError error = deserializeJson(document, file);
   file.close();
   if (error) { logEvent("Invalid config JSON"); return false; }

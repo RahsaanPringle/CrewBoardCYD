@@ -48,6 +48,13 @@ Both supported existing representations are shown and saved unchanged. No
 birth year is inferred or added, and there is no migration or new disclosure of
 birth years.
 
+## Customers
+
+The owner can add or edit customers. Signed-in staff can view them; customers
+do not have accounts. Each customer has a required name (up to 80 bytes) and
+an optional multiple-selection list of existing locations. Coordinates remain
+on the shared location records. Remove customer links before deleting a location.
+
 ## Business locations
 
 The address autocomplete section is `section-jobsite`; it is intended for

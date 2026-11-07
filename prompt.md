@@ -1,19 +1,9 @@
-OK, this is good. We should probably start cutting branches for future work.
+It looks like we have logins (UserID and Password) for the users in the config, but we don't have them for the roster.
+The crew roster needs to be able to log in.
+We also need to add another section for customers.
 
-Next features:
+Customers don't get to log in.
 
-- Message Board;
-User must be specified to post a message.
-UserName displays on message.
-Other users have the ability to reply to messages and replies.
-- Roster
-Owner can modify crew members.
-Crew Members can't modify owner.
-Defined set of roles relevant to the kind of business.
-- Locations
-Currently, the grid and pin points show, but the map doesn't.
-Latitude and longitude should probably be required for pin points to be visible on map grid.
-- Schedule
-The list display is good, but a calendar display would also be good.
+Crew Members (roster) and customers need to reference the locations table, or in some way be able to have their latitude and longitude show up on the map.
 
-Let's commit this branch, and start a new branch based on this one to complete this work.
+At some point, we'll want to use an API to tie the addresses in with Latitude and Longitude, so it might make sense to keep the lat/lon in a single table and reference them from the address table(s)

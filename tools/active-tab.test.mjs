@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const targets = ['#schedule-pane', '#messages-pane', '#roster-pane', '#locations-pane'];
+const targets = ['#schedule-pane', '#messages-pane', '#roster-pane', '#locations-pane', '#customers-pane'];
 const assets = ['../CrewBoard_CYD/sd-card/crewboard/www/', '../crewboard/www/'];
 
 function fixture(asset, { saved = null, failure, missingPane, disabledTab } = {}) {

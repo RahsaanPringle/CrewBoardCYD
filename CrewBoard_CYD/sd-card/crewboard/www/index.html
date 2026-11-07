@@ -106,6 +106,7 @@
       <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#schedule-pane" type="button">Schedule</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#messages-pane" type="button">Messages</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#roster-pane" type="button">Roster</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#customers-pane" type="button">Customers</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#locations-pane" type="button">Locations</button></li>
     </ul>
 
@@ -127,6 +128,11 @@
       <section id="roster-pane" class="tab-pane fade">
         <div class="section-heading"><div><h2>Roster</h2><p>Employee names and business roles only.</p></div><button class="btn btn-primary admin-only add-record" data-kind="roster">Add employee</button></div>
         <div class="card shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Name</th><th>Role</th><th>Contact</th><th>Birthday</th><th>Login</th><th>Status</th><th class="text-end"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="roster-list"></tbody></table></div></div>
+      </section>
+
+      <section id="customers-pane" class="tab-pane fade">
+        <div class="section-heading"><div><h2>Customers</h2><p>Customer names and linked locations. Customers do not have logins.</p></div><button class="btn btn-primary admin-only add-record" data-kind="customers">Add customer</button></div>
+        <div id="customers-list" class="vstack gap-3"></div>
       </section>
 
       <section id="locations-pane" class="tab-pane fade">
