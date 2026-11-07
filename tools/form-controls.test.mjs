@@ -84,6 +84,20 @@ function fakeControl(id, value, options = {}) {
 }
 
 for (const asset of assets) {
+  test(`${asset} exposes a customer tab and editor with shared location choices`, () => {
+    const f = fixture(asset);
+    const html = fs.readFileSync(new URL('index.html', new URL(asset, import.meta.url)), 'utf8');
+    assert.match(html, /data-bs-target="#customers-pane"/);
+    assert.match(html, /id="customers-pane"/);
+    f.api.state.customers = [{ id: 'customer-1', name: 'Customer', locationIds: ['loc-1'] }];
+    f.api.openEditor('customers', 'customer-1', '', null);
+    const markup = f.markup();
+    assert.match(control(markup, 'name'), /required.*maxlength="80"/);
+    assert.match(control(markup, 'locationIds'), /multiple/);
+    assert.match(markup, /<option value="loc-1" selected>Site<\/option>/);
+    assert.doesNotMatch(markup, /field-password|field-username/);
+  });
+
   test(`${asset} generates semantic, labeled controls with context-specific autofill`, () => {
     const f = fixture(asset);
     f.api.openEditor('roster', 'emp-1', '', null);

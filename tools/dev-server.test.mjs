@@ -100,6 +100,22 @@ test('persists collections across restarts without changing SD-card samples', as
   assert.deepEqual(f.errors, []);
 });
 
+test('customers are owner-managed, visible to staff, linked to shared locations, and persist', async (t) => {
+  const f = await fixture(t);
+  assert.deepEqual((await f.request('/api/v1/customers')).body, []);
+  const locations = (await f.request('/api/v1/locations')).body;
+  const customers = [{ id: 'customer-1', name: 'Example customer', locationIds: locations.map((location) => location.id) }];
+  assert.equal((await f.request('/api/v1/customers', { method: 'PUT', user: f.config.users[0], data: customers })).status, 403);
+  assert.equal((await f.request('/api/v1/customers', { method: 'PUT', data: [{ id: 'bad', name: 'Bad', locationIds: 'wrong' }] })).status, 422);
+  assert.equal((await f.request('/api/v1/customers', { method: 'PUT', data: [{ id: 'bad', name: 'Bad', locationIds: ['missing'] }] })).status, 422);
+  assert.equal((await f.request('/api/v1/customers', { method: 'PUT', data: customers })).status, 200);
+  assert.equal((await f.request('/api/v1/locations', { method: 'PUT', data: [] })).status, 422);
+  assert.deepEqual((await f.request('/api/v1/customers', { user: f.config.users[0] })).body, customers);
+  assert.equal((await f.request('/api/v1/session', { user: { username: 'Example customer', password: 'pass' } })).status, 401);
+  await f.restart();
+  assert.deepEqual((await f.request('/api/v1/customers')).body, customers);
+});
+
 test('shared editor keeps the form in Bootstrap scrollable content and names the dialog', () => {
   const html = fs.readFileSync(path.join(assetRoot, 'www', 'index.html'), 'utf8');
   assert.match(html, /id="record-modal"[^>]*aria-labelledby="record-modal-title"/);
@@ -241,6 +257,32 @@ test('preserves unchanged noncanonical legacy fields while rejecting new invalid
   assert.equal((await f.request('/api/v1/roster', { method: 'PUT', data: changedInvalid })).status, 200);
   const changedDate = structuredClone(schedule); changedDate[0].date = '2026/12/02';
   assert.equal((await f.request('/api/v1/schedule', { method: 'PUT', data: changedDate })).status, 422);
+});
+
+test('supports 50 staff accounts across restarts without changing the job assignment limit', async (t) => {
+  const f = await fixture(t);
+  for (let i = 1; i < 50; i += 1) {
+    const employeeId = `employee-${String(i).padStart(2, '0')}-${'e'.repeat(52)}`;
+    const username = `staff-${String(i).padStart(2, '0')}-${'u'.repeat(31)}`;
+    const password = 'p'.repeat(100);
+    const result = await f.request('/api/v1/accounts', {
+      method: 'PUT', data: { employeeId, username, password }
+    });
+    assert.equal(result.status, 200, `account ${i + 1}`);
+    assert.equal(result.body.length, i + 1);
+    assert.ok(result.body.every((account) => !Object.hasOwn(account, 'password')));
+  }
+  const overflow = await f.request('/api/v1/accounts', {
+    method: 'PUT', data: { employeeId: 'overflow', username: 'overflow', password: 'password' }
+  });
+  assert.equal(overflow.status, 409);
+  await f.restart();
+  assert.equal((await f.request('/api/v1/accounts')).body.length, 50);
+  const user = { username: `staff-49-${'u'.repeat(31)}`, password: 'p'.repeat(100) };
+  assert.equal((await f.request('/api/v1/session', { user })).status, 200);
+  const schedule = (await f.request('/api/v1/schedule')).body;
+  schedule[0].crewIds = Array.from({ length: 13 }, (_, i) => `employee-${i}`);
+  assert.equal((await f.request('/api/v1/schedule', { method: 'PUT', data: schedule })).status, 422);
 });
 
 test('updates staff logins immediately without exposing passwords and restricts profile edits', async (t) => {

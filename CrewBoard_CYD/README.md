@@ -55,6 +55,7 @@ Format the card as FAT32. Copy the contents of the repository's `sd-card` direct
 /crewboard/
 ├── data/
 │   ├── roster.json
+│   ├── customers.json
 │   ├── locations.json
 │   ├── schedule.json
 │   └── messages.json
@@ -91,16 +92,19 @@ The included JSON records are sample data. Replace them through the owner interf
 
 The roster requires only a display name. Business role, phone, email, birthday, emergency contact, notes, username, and password can be added later. Staff passwords are never stored in `roster.json` or returned to the browser; the administrator form updates the protected `users` section of `/config.json`. New credentials take effect immediately without restarting the CYD.
 
+Up to 50 staff accounts are supported. A job can still have at most 12 assigned crew members.
+
 Birthdays may be entered as `MM-DD` or `YYYY-MM-DD`; the year remains optional. Schedule dates use `YYYY-MM-DD`, times use 24-hour `HH:MM`, and an end time cannot precede its start time. Existing noncanonical dates and times are shown for correction rather than silently cleared. See the [form-field inventory](../docs/form-fields.md) for all controls, validation, autofill, and compatibility details.
 
 ### Permissions and features
 
 - **Roster roles** come from a fixed list for a mowing/landscaping business: Owner, Crew Lead, Crew Member, Equipment Operator, and Trainee. The list is defined in `rosterRoles` in `CrewBoard_CYD.ino` and is returned to the browser by `/api/v1/session`. Records with an older role outside the list must be given a listed role (or none) the next time the owner saves the roster.
 - **Roster editing:** the owner can add, edit, and delete any employee. A staff login that is linked to a roster record gets an **Edit my details** button for its own phone, email, birthday, and emergency contact only. Staff cannot change names, roles, status, or logins, and can never modify a record whose role is Owner.
+- **Customers:** the owner can manage names and link each customer to multiple existing locations. Signed-in staff can see customer records and their locations; customers do not get login accounts. Linked customer names appear on location cards and map labels. Existing SD cards without `customers.json` start with an empty customer list; the first save creates the file.
 - **Message board:** every signed-in user can post and reply, including replies to replies. The server stamps each post with the signed-in username, which is displayed on the message. Authors can delete their own posts; the owner can edit or delete any post. Deleting a post also deletes its replies. Post times come from the browser's clock.
 - **Locations:** latitude and longitude are required. Only locations with coordinates are pinned. The map draws OpenStreetMap tiles when the viewing device has internet access and falls back to the offline grid otherwise.
 - **Schedule:** opens on the current local month in **Calendar**. Select a date to open its filtered **List**; choosing List before selecting a date uses today. New jobs default to the selected date, or today if none is selected. **Current month** navigates without changing the selection, and returning to Calendar shows the selected date's month. The date and subview reset when the page is reloaded or reopened.
-- **Last active tab:** Schedule, Messages, Roster, or Locations reopens after a refresh or a later visit in the same browser profile. Only the tab target is saved in `localStorage` under `crewboard.activeTab`; no tab content, form data, or credentials are saved by this feature or sent to the CYD. Missing, invalid, or unavailable storage leaves Schedule as the default. Storage is scoped to the page origin: a different IP address, hostname, protocol, or port may have a separate preference. The preference is not synchronized across devices or associated with a login.
+- **Last active tab:** Schedule, Messages, Roster, Customers, or Locations reopens after a refresh or a later visit in the same browser profile. Only the tab target is saved in `localStorage` under `crewboard.activeTab`; no tab content, form data, or credentials are saved by this feature or sent to the CYD. Missing, invalid, or unavailable storage leaves Schedule as the default. Storage is scoped to the page origin: a different IP address, hostname, protocol, or port may have a separate preference. The preference is not synchronized across devices or associated with a login.
 
 API endpoints added for staff writes (all require the `X-CrewBoard-Request: 1` header):
 

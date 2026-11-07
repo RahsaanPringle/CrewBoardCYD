@@ -8,7 +8,8 @@ const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 export const assetRoot = path.join(repository, 'CrewBoard_CYD', 'sd-card', 'crewboard');
 const defaultStorage = path.join(repository, '.local-dev');
 const roles = ['Owner', 'Crew Lead', 'Crew Member', 'Equipment Operator', 'Trainee'];
-const limits = { roster: 50, locations: 100, schedule: 250, messages: 200 };
+const limits = { roster: 50, customers: 100, locations: 100, schedule: 250, messages: 200 };
+const maxUserCount = 50;
 const maxBody = 24576;
 const mime = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -100,6 +101,10 @@ function validate(collection, records, previousRecords = []) {
       requireCondition(empty(record.email) || validEmail(record.email) || unchanged('email'), 422, 'Enter a valid email address.');
       requireCondition(empty(record.username) || !record.username.includes(':') || unchanged('username'),
         422, 'A username cannot contain a colon.');
+    } else if (collection === 'customers') {
+      requireCondition(fields({ name: [80] }) && Array.isArray(record.locationIds) &&
+        record.locationIds.length <= 100 && record.locationIds.every((id) => text(id, 64)),
+      422, 'A customer record is invalid.');
     } else if (collection === 'locations') {
       requireCondition(fields({ name: [80], address: [120], city: [60], region: [30, false], postalCode: [16, false] }),
         422, 'A location record is invalid.');
@@ -141,11 +146,13 @@ export function prepareStorage(storage = defaultStorage) {
   }
   const config = readJson(configPath);
   requireCondition(text(config.admin?.username, 40) && text(config.admin?.password, 100) &&
-    Array.isArray(config.users) && config.users.length <= 12 &&
+    Array.isArray(config.users) && config.users.length <= maxUserCount &&
     config.users.every((user) => text(user.username, 40) && text(user.password, 100)) &&
     (!config.theme || themeName(config.theme)), 500, 'Invalid local development configuration.');
   for (const collection of Object.keys(limits)) {
-    const records = readJson(safePath(storage, `data/${collection}.json`));
+    const file = safePath(storage, `data/${collection}.json`);
+    if (collection === 'customers' && !exists(file)) writeJson(file, []);
+    const records = readJson(file);
     validate(collection, records, records);
     requireCondition(Buffer.byteLength(JSON.stringify(records)) <= maxBody, 500, `${collection} exceeds the CYD size limit.`);
   }
@@ -210,6 +217,13 @@ export function createDevServer({ storage = defaultStorage, logger = console } =
   const load = (collection) => readJson(collectionPath(collection));
   function save(collection, records) {
     validate(collection, records, load(collection));
+    if (collection === 'customers' || collection === 'locations') {
+      const customers = collection === 'customers' ? records : load('customers');
+      const locations = collection === 'locations' ? records : load('locations');
+      const ids = new Set(locations.map((location) => location.id));
+      requireCondition(customers.every((customer) => Array.isArray(customer.locationIds) &&
+        customer.locationIds.every((id) => ids.has(id))), 422, 'A customer references a missing location.');
+    }
     const body = JSON.stringify(records);
     requireCondition(Buffer.byteLength(body) <= maxBody, 422, 'This collection is full. Ask the owner to remove older records.');
     install(collectionPath(collection), body);
@@ -245,7 +259,7 @@ export function createDevServer({ storage = defaultStorage, logger = console } =
         if (password) config.users[index].password = password;
       } else {
         requireCondition(password.length > 0, 422, 'A password is required for a new username.');
-        requireCondition(config.users.length < 12, 409, 'The maximum number of staff logins has been reached.');
+        requireCondition(config.users.length < maxUserCount, 409, 'The maximum number of staff logins has been reached.');
         config.users.push({ employeeId, username, password });
       }
       writeJson(configPath, config);

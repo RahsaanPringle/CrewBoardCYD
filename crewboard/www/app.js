@@ -6,7 +6,7 @@
   const OWNER_ROLE = 'Owner';
   const TILE_SIZE = 256;
   const state = {
-    session: null, roster: [], locations: [], schedule: [], messages: [], accounts: [],
+    session: null, roster: [], customers: [], locations: [], schedule: [], messages: [], accounts: [],
     scheduleView: 'calendar', calendarMonth: null, selectedDay: ''
   };
   const modal = new bootstrap.Modal(document.getElementById('record-modal'));
@@ -97,6 +97,15 @@
       return '<tr><td class="fw-semibold">' + escapeHtml(employee.name) + '</td><td>' + roleBadge + '</td><td>' + contact + '</td><td>' + escapeHtml(employee.birthday || '—') + '</td><td>' + (loginUsername ? '<span class="badge text-bg-info">' + escapeHtml(loginUsername) + '</span>' : '<span class="text-secondary">None</span>') + '</td><td><span class="badge ' + (employee.active ? 'text-bg-success' : 'text-bg-secondary') + '">' + (employee.active ? 'Active' : 'Inactive') + '</span></td><td class="text-end">' + actions + '</td></tr>';
     });
     $('#roster-list').html(rows.length ? rows.join('') : '<tr><td colspan="7">' + empty('No employees have been added.') + '</td></tr>');
+  }
+
+  function renderCustomers() {
+    const cards = state.customers.map((customer) => {
+      const locations = (customer.locationIds || []).map(locationName).join(', ') || 'No locations linked';
+      return '<article class="card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between gap-2"><h3 class="h5">' +
+        escapeHtml(customer.name) + '</h3>' + actionButtons('customers', customer.id) + '</div><p class="mb-0">' + escapeHtml(locations) + '</p></div></article>';
+    });
+    $('#customers-list').html(cards.length ? cards.join('') : empty('No customers have been added.'));
   }
 
   function normalizeRole(role) {
@@ -255,7 +264,8 @@
       const mapLink = hasCoordinates(location)
         ? '<a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=' + encodeURIComponent(location.latitude) + '&mlon=' + encodeURIComponent(location.longitude) + '#map=16/' + encodeURIComponent(location.latitude) + '/' + encodeURIComponent(location.longitude) + '">Open street map</a>'
         : '<span class="badge text-bg-warning">Needs latitude and longitude — hidden from map</span>';
-      return '<article class="card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between gap-2"><h3 class="h5">' + escapeHtml(location.name) + '</h3>' + actionButtons('locations', location.id) + '</div><p>' + escapeHtml(fullAddress(location)) + '</p>' + mapLink + '</div></article>';
+      const customers = state.customers.filter((customer) => (customer.locationIds || []).includes(location.id)).map((customer) => customer.name);
+      return '<article class="card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between gap-2"><h3 class="h5">' + escapeHtml(location.name) + '</h3>' + actionButtons('locations', location.id) + '</div><p>' + escapeHtml(fullAddress(location)) + '</p>' + (customers.length ? '<p>Customers: ' + escapeHtml(customers.join(', ')) + '</p>' : '') + mapLink + '</div></article>';
     });
     $('#locations-list').html(cards.length ? cards.join('') : empty('No business locations have been added.'));
     renderLocationMap();
@@ -299,7 +309,9 @@
     const pins = points.map((item) => {
       const x = (item.point.x - left).toFixed(1); const y = (item.point.y - top).toFixed(1);
       const jobs = state.schedule.filter((job) => job.locationId === item.location.id).length;
-      return '<span class="map-point" style="left:' + x + 'px;top:' + y + 'px" title="' + escapeHtml(item.location.name + ': ' + jobs + ' scheduled job(s)') + '">' + jobs + '</span><span class="map-label" style="left:' + x + 'px;top:' + y + 'px">' + escapeHtml(item.location.name) + '</span>';
+      const customers = state.customers.filter((customer) => (customer.locationIds || []).includes(item.location.id)).map((customer) => customer.name);
+      const label = item.location.name + (customers.length ? ' (' + customers.join(', ') + ')' : '');
+      return '<span class="map-point" style="left:' + x + 'px;top:' + y + 'px" title="' + escapeHtml(label + ': ' + jobs + ' scheduled job(s)') + '">' + jobs + '</span><span class="map-label" style="left:' + x + 'px;top:' + y + 'px">' + escapeHtml(label) + '</span>';
     });
     $map.html(tiles.join('') + pins.join('') + '<div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>');
     // Offline devices keep the grid background when tiles cannot load.
@@ -311,7 +323,7 @@
   function renderAll() {
     $('.admin-only').toggle(isAdmin());
     $('#signed-in-user').text(state.session ? state.session.username + (isAdmin() ? ' · Administrator' : ' · Staff') : '');
-    renderRoster(); renderSchedule(); renderMessages(); renderLocations();
+    renderRoster(); renderCustomers(); renderSchedule(); renderMessages(); renderLocations();
   }
 
   function validCalendarDate(value, yearOptional) {
@@ -499,6 +511,13 @@
       const employee = byId('roster', state.session.employeeId) || {};
       title = 'Edit my details';
       fields = '<p class="form-text">Only your own contact details can be changed here. Ask the owner to change your name, role, or login.</p>' + contactFields(employee, true);
+    } else if (kind === 'customers') {
+      title = id ? 'Edit customer' : 'Add customer';
+      const selected = record.locationIds || [];
+      const options = state.locations.map((item) => '<option value="' + escapeHtml(item.id) + '"' + (selected.includes(item.id) ? ' selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
+      fields = field('name', 'Customer name', 'text', record.name, { required: true, maxlength: 80 }) +
+        '<div class="mb-3"><label class="form-label" for="field-locationIds">Locations (optional)</label><select class="form-select" id="field-locationIds" name="locationIds" multiple size="5" aria-describedby="customer-locations-help">' + options +
+        '</select><div id="customer-locations-help" class="form-text">Choose existing locations. Use Ctrl or Command to select more than one, or use your phone’s selection picker. Add locations in the Locations tab first.</div></div>';
     } else if (kind === 'locations') {
       title = id ? 'Edit location' : 'Add location';
       fields = field('name', 'Location name', 'text', record.name, { required: true, maxlength: 80 }) +
@@ -574,7 +593,7 @@
 
   function formRecord() {
     const kind = editing.kind;
-    const id = editing.id || makeId(kind === 'schedule' ? 'job' : kind === 'locations' ? 'loc' : 'emp');
+    const id = editing.id || makeId(kind === 'schedule' ? 'job' : kind === 'locations' ? 'loc' : kind === 'customers' ? 'customer' : 'emp');
     const previous = editing.id ? byId(kind, editing.id) : null;
     const record = $.extend({}, previous || {}, { id: id });
     if (kind === 'roster') {
@@ -583,6 +602,12 @@
       return $.extend(record, contactValues(previous), {
         _accountUsername: $('#field-username').val().trim(), _password: $('#field-password').val()
       });
+    }
+    if (kind === 'customers') {
+      assignField(record, 'name', previous, trim);
+      assignField(record, 'locationIds', previous);
+      if (!record.locationIds) record.locationIds = [];
+      return record;
     }
     if (kind === 'locations') {
       ['name', 'address', 'city', 'region', 'postalCode'].forEach((name) => assignField(record, name, previous, trim));
@@ -610,6 +635,7 @@
   function deleteRecord(kind, id) {
     if (kind === 'roster' && state.schedule.some((job) => (job.crewIds || []).includes(id))) { showAlert('This employee is assigned to a job. Remove that assignment first.'); return; }
     if (kind === 'locations' && state.schedule.some((job) => job.locationId === id)) { showAlert('This location is used by a job. Change or remove that job first.'); return; }
+    if (kind === 'locations' && state.customers.some((customer) => (customer.locationIds || []).includes(id))) { showAlert('This location is linked to a customer. Remove that link first.'); return; }
     if (!window.confirm('Delete this record?')) return;
     const record = byId(kind, id);
     saveCollection(kind, state[kind].filter((item) => item.id !== id)).done(() => {
@@ -652,9 +678,9 @@
     return api('session').done((session) => {
       state.session = session;
       const accountsRequest = session.isAdmin ? api('accounts') : $.Deferred().resolve([]).promise();
-      $.when(api('roster'), api('locations'), api('schedule'), api('messages'), accountsRequest).done((roster, locations, schedule, messages, accounts) => {
+      $.when(api('roster'), api('locations'), api('schedule'), api('messages'), accountsRequest, api('customers')).done((roster, locations, schedule, messages, accounts, customers) => {
         const unwrap = (result) => result && result.length === 3 && typeof result[1] === 'string' ? result[0] : result;
-        state.roster = unwrap(roster); state.locations = unwrap(locations); state.schedule = unwrap(schedule); state.messages = unwrap(messages); state.accounts = unwrap(accounts) || [];
+        state.roster = unwrap(roster); state.locations = unwrap(locations); state.schedule = unwrap(schedule); state.messages = unwrap(messages); state.accounts = unwrap(accounts) || []; state.customers = unwrap(customers);
         $('#connection-state').removeClass().addClass('badge text-bg-success').text('Local'); renderAll();
       }).fail(failed);
     }).fail(failed);
