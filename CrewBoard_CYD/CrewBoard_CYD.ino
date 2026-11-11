@@ -1,5 +1,7 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <ESPmDNS.h>
+#include <NetBIOS.h>
 #include <SD.h>
 #include <TFT_eSPI.h>
 #include <ArduinoJson.h>
@@ -29,6 +31,7 @@ constexpr size_t maxHeaderLineLength = 768;
 constexpr size_t maxHeaderBytes = 4096;
 
 constexpr char primaryConfigPath[] = "/config.json";
+constexpr char defaultHostname[] = "crewboard-cyd";
 constexpr char webRoot[] = "/crewboard/www";
 constexpr char dataRoot[] = "/crewboard/data";
 constexpr char davStorageRoot[] = "/crewboard/shared";
@@ -67,6 +70,7 @@ String setupApPassword;
 String adminUsername;
 String adminPassword;
 String siteTheme;
+String deviceHostname;
 UserCredential users[maxUserCount];
 uint8_t userCount = 0;
 String statusLines[statusLineCount];
@@ -89,11 +93,14 @@ void drawStatus() {
   display.print("IP: ");
   display.print(serverAddress.toString());
   display.setCursor(8, 50);
+  display.print("Host: ");
+  display.print(deviceHostname);
+  display.setCursor(8, 66);
   display.print("Network: ");
   display.print(wifiSsid);
-  display.drawFastHLine(8, 68, 304, TFT_DARKGREY);
+  display.drawFastHLine(8, 84, 304, TFT_DARKGREY);
   for (uint8_t i = 0; i < statusLineCount; ++i) {
-    display.setCursor(8, 77 + i * 20);
+    display.setCursor(8, 93 + i * 20);
     display.print(statusLines[i]);
   }
 }
@@ -1194,27 +1201,64 @@ bool loadConfiguration() {
     users[userCount].password = userPassword;
     ++userCount;
   }
+  // Login updates also reload configuration; network naming changes require a reboot.
+  if (deviceHostname.isEmpty()) {
+    JsonVariantConst hostnameValue = document["hostname"];
+    const char* configuredHostname = hostnameValue.is<const char*>() ? hostnameValue.as<const char*>() : nullptr;
+    if (form_validation::hostname(configuredHostname) &&
+        hostnameValue.as<JsonString>().size() == strlen(configuredHostname)) {
+      deviceHostname = configuredHostname;
+      deviceHostname.toLowerCase();
+    } else {
+      deviceHostname = defaultHostname;
+      if (!hostnameValue.isUnbound()) logEvent("Invalid hostname; using default");
+    }
+  }
   logEvent("Config: /config.json");
   return true;
 }
 
 bool connectToNetwork() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(wifiSsid.c_str(), wifiPassword.c_str());
-  const uint32_t started = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - started < 20000) { delay(500); Serial.print('.'); }
-  Serial.println();
-  if (WiFi.status() == WL_CONNECTED) {
-    serverAddress = WiFi.localIP();
-    logEvent("Wi-Fi connected");
-    return true;
+  if (!WiFi.setHostname(deviceHostname.c_str())) logEvent("Wi-Fi hostname setup failed");
+  if (WiFi.mode(WIFI_STA)) {
+    WiFi.begin(wifiSsid.c_str(), wifiPassword.c_str());
+    const uint32_t started = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - started < 20000) { delay(500); Serial.print('.'); }
+    Serial.println();
+    if (WiFi.status() == WL_CONNECTED && WiFi.localIP() != IPAddress(0, 0, 0, 0)) {
+      serverAddress = WiFi.localIP();
+      logEvent("Wi-Fi connected");
+      return true;
+    }
+    logEvent("Wi-Fi unavailable; starting setup AP");
+  } else {
+    logEvent("Station mode startup failed");
   }
-  WiFi.mode(WIFI_AP);
-  if (!WiFi.softAP(setupApSsid.c_str(), setupApPassword.c_str())) return false;
+  if (!WiFi.mode(WIFI_AP)) { logEvent("Setup AP mode failed"); return false; }
+  if (!WiFi.softAP(setupApSsid.c_str(), setupApPassword.c_str())) { logEvent("Setup AP startup failed"); return false; }
   wifiSsid = setupApSsid;
   serverAddress = WiFi.softAPIP();
   logEvent("Setup access point active");
   return true;
+}
+
+void startNetworkNames() {
+  if (WiFi.getMode() != WIFI_STA || WiFi.status() != WL_CONNECTED ||
+      WiFi.localIP() == IPAddress(0, 0, 0, 0)) return;
+  if (!MDNS.begin(deviceHostname.c_str())) {
+    MDNS.end();
+    logEvent("mDNS startup failed; use IP");
+  } else if (!MDNS.addService("http", "tcp", serverPort)) {
+    MDNS.end();
+    logEvent("mDNS HTTP service failed; use IP");
+  } else {
+    logEvent("Open http://" + deviceHostname + ".local/");
+  }
+  if (!NBNS.begin(deviceHostname.c_str())) {
+    logEvent("NetBIOS startup failed; use IP");
+  } else {
+    logEvent("NetBIOS ready: " + deviceHostname);
+  }
 }
 
 void setup() {
@@ -1241,6 +1285,7 @@ void setup() {
   if (!SD.exists(davStorageRoot)) SD.mkdir(davStorageRoot);
   server.begin();
   logEvent("Open http://" + serverAddress.toString());
+  startNetworkNames();
 }
 
 void loop() {

@@ -3,6 +3,22 @@
 
 int main() {
   using namespace form_validation;
+  assert(hostname("a"));
+  assert(hostname("7"));
+  assert(hostname("CrewBoard-CYD"));
+  assert(hostname("abc-def-1234567"));
+  assert(hostname("a--b"));
+  assert(!hostname(nullptr));
+  assert(!hostname(""));
+  assert(!hostname("abc-def-12345678"));
+  assert(!hostname("-crewboard"));
+  assert(!hostname("crewboard-"));
+  assert(!hostname("crew_board"));
+  assert(!hostname("crew board"));
+  assert(!hostname(" crewboard"));
+  assert(!hostname("crewboard "));
+  assert(!hostname("crewboard.local"));
+  assert(!hostname("caf\xc3\xa9"));
   assert(date("02-29", true));
   assert(date("2000-02-29", true));
   assert(date("2024-02-29"));
