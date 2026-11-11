@@ -125,6 +125,19 @@ Address: http://192.168.4.1/
 
 The CYD screen shows the actual access-point IP address. It never displays the password.
 
+## CrewBoard works by IP but not by name
+
+First open `http://CYD-IP/` using the address on the display. This checks HTTP independently of name resolution.
+
+- In setup access-point mode, use the displayed AP IP (normally `http://192.168.4.1/`). Name services are not started there.
+- On the configured Wi-Fi network, try `http://HOSTNAME.local/` from a client with mDNS support on the same LAN. Enter the full `http://` URL so the browser does not treat the name as a search.
+- Check **Host** on the CYD and the Serial log at **115200 baud**. Invalid configured names fall back to `crewboard-cyd`. Hostname changes require a restart.
+- Check for `mDNS startup failed`, `mDNS HTTP service failed`, or `NetBIOS startup failed`. HTTP by IP remains available if one of these services fails.
+- A plain `http://HOSTNAME/` address requires compatible router DNS or enabled client name resolution. NetBIOS may be disabled by Windows/network policy; it is not guaranteed.
+- Check guest-network isolation, multicast/broadcast filtering, VPNs, VLANs, or duplicate device names. Do not assume names resolve across separate networks.
+
+Keep a DHCP reservation for a stable numeric fallback. CrewBoard does not run a DNS server or configure router DNS.
+
 ## A new crew member cannot sign in
 
 Open **Roster**, edit the crew member, and confirm that both a username and password have been provided. A username is optional during onboarding, but a new username cannot be activated without a password. Leaving the password blank when editing an existing login keeps its current password.

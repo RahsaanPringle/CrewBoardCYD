@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TraxxiServer | Firmware starter guide</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.65 system-ui, sans-serif; color: #1c2932; background: #f4f1e8; }
+    body { margin: 0; }
+    main { width: min(960px, calc(100% - 32px)); margin: 32px auto; }
+    header, section { padding: 24px; border-radius: 12px; margin: 20px 0; background: #fffdf7; }
+    header { background: #176b58; color: white; }
+    h1, h2 { line-height: 1.2; }
+    a { color: #145d4e; }
+    pre { overflow: auto; padding: 16px; background: #1c2932; color: white; border-radius: 8px; }
+    code { overflow-wrap: anywhere; }
+    .warning { border-left: 5px solid #d7833f; background: #fff5e8; }
+    li { margin: 8px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <header><h1>TraxxiServer: firmware first</h1><p>Version 0.1.0 / separate CYD foundation for the Traxxis Server concept.</p></header>
+  <section>
+    <h2>What this milestone does</h2>
+    <p>A new Arduino sketch mounts a FAT32 SD card, loads configuration, joins the business router, sets a device hostname, and serves an owner-password-protected status page from <code>/traxxi/www</code>. A read-only <code>GET /api/v1/status</code> reports the name, IP address, discovery state, versions, uptime, and formatted card capacity/usage in bytes. Configuration and credentials are never served.</p>
+    <p>The page introduces HomePage, Employee Roster, Schedule, and Document Share as planned apps. Only the foundation status page is working; there are no business records, employee logins, uploads, FTP, WebDAV, installer, or document previews yet.</p>
+    <p>All project files are inside TraxxiServer. The existing CrewBoard firmware and assets are unchanged. Use a separate device/card for testing: flashing this sketch onto a CrewBoard device replaces the firmware on that device.</p>
+    <p>Product context: <a href="../../docs/SitePages/business-server-brainstorm.html">business-server brainstorm</a> and <a href="../../docs/SitePages/traxxis-server-sales-guide.html">Traxxis sales concept</a>.</p>
+  </section>
+  <section class="warning">
+    <h2>Bench use only</h2>
+    <p>This is HTTP with Basic authentication, not HTTPS. Passwords and traffic are not encrypted. Use a unique test password on a trusted, isolated local network, without port forwarding. Do not treat this as production-ready or store real personnel information. Production deployment needs verified HTTPS, account roles, permission checks, backup/restore, and hardware reliability testing.</p>
+    <p>The SD configuration contains plaintext credentials. Keep it out of Git, screenshots, and shared backup locations. This project's ignore rules cover <code>sd-card/config.json</code>, not arbitrary copies elsewhere.</p>
+  </section>
+  <section>
+    <h2>Hardware and build</h2>
+    <ul>
+      <li>ESP32-2432S028R CYD, reliable 5 V supply, FAT32 microSD. Start with a dedicated 32 GB card.</li>
+      <li>SD uses CS 5 and the ESP32 default VSPI pins (SCK 18, MISO 19, MOSI 23); display backlight uses GPIO 21.</li>
+      <li>Install Espressif ESP32 core 3.3.12, TFT_eSPI, and ArduinoJson 7.x. WebServer, WiFi, SD, ESPmDNS, and NetBIOS come with the ESP32 core.</li>
+      <li>Configure TFT_eSPI for the actual CYD display. A common ILI9341 setup uses MISO 12, MOSI 13, SCLK 14, CS 15, DC 2, RST -1. Board revisions vary; verify your hardware.</li>
+      <li>Open <a href="../firmware/TraxxiServer/TraxxiServer.ino">firmware/TraxxiServer/TraxxiServer.ino</a> in Arduino IDE. Select ESP32 Dev Module: 240 MHz CPU, 80 MHz flash, QIO (DIO if needed), 4 MB flash, default partition, 115200 upload speed.</li>
+    </ul>
+    <p>Compile from the TraxxiServer folder with an installed <code>arduino-cli</code>:</p>
+    <pre><code>arduino-cli compile --fqbn "esp32:esp32:esp32:CPUFreq=240,FlashFreq=80,FlashMode=qio,FlashSize=4M,PartitionScheme=default,UploadSpeed=115200" --build-path ".\build" ".\firmware\TraxxiServer"</code></pre>
+    <p>If the CLI is not on PATH, Arduino IDE on Windows may supply it at <code>C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe</code>. Upload only after selecting the intended device's COM port.</p>
+  </section>
+  <section>
+    <h2>Prepare a separate SD card</h2>
+    <ol>
+      <li>Use an empty, already FAT32-formatted card. Back up any existing contents before changing a card.</li>
+      <li>Copy the contents of <a href="../sd-card/traxxi/www/index.html">sd-card</a> to the card root.</li>
+      <li>Copy <a href="../sd-card/config.sample.json">config.sample.json</a> to <code>/config.json</code> on the card, and replace every placeholder. The sample will intentionally fail validation if left unchanged.</li>
+      <li>Insert the card and boot the separate test CYD. Read its screen or Serial monitor at 115200 baud.</li>
+    </ol>
+    <pre><code>/config.json
+/traxxi/www/index.html
+/traxxi/www/app.css
+/traxxi/www/app.js</code></pre>
+    <ul>
+      <li><code>wifi.ssid</code>: the router's 2.4 GHz Wi-Fi network name, 1-32 printable ASCII characters.</li>
+      <li><code>wifi.password</code>: 8-63 printable ASCII characters, or a 64-character hexadecimal WPA key. This starter does not support open networks or enterprise Wi-Fi.</li>
+      <li><code>hostname</code>: 1-15 ASCII letters/digits/hyphens, beginning and ending with a letter/digit. Normalized to lowercase. Omit the field for <code>traxxi-server</code>; an explicitly invalid, null, or empty value stops startup. Do not append <code>.local</code>.</li>
+      <li><code>serverName</code>: friendly business-server title, 1-64 printable ASCII characters.</li>
+      <li><code>admin.username</code>: 1-32 printable ASCII characters, without spaces or colons.</li>
+      <li><code>admin.password</code>: unique 16-128 printable ASCII characters, different from the Wi-Fi password. This is the sole owner login in this milestone, not the planned three-role account system.</li>
+    </ul>
+    <p>Configuration must be a JSON object of at most 4096 bytes. Missing files, malformed or invalid config, missing web assets, SD failure, or initial Wi-Fi failure stop startup with a screen/Serial error. There is no fallback access point or web config editor. Correct the card/router and reboot. All configuration changes require a restart.</p>
+  </section>
+  <section>
+    <h2>Open the server</h2>
+    <p>On the same local network, open the displayed <code>http://IP-ADDRESS/</code> and enter the owner credentials when the browser prompts. On compatible clients, use <code>http://traxxi-server.local/</code> (or your configured hostname). The firmware advertises HTTP over mDNS and supplies its hostname to DHCP; NetBIOS is attempted for compatible Windows clients.</p>
+    <p>Plain-name access depends on the router/client, and mDNS can be blocked by guest networks, client isolation, multicast filtering, or VLANs. Discovery failure is logged and does not stop HTTP. Reserve an IP address in the router as a fallback. Use distinct hostnames for different devices. After an established Wi-Fi connection drops, automatic reconnection is enabled; HTTP/discovery restart when the connection/address changes.</p>
+    <p>Only the three exact web asset routes and status API are exposed. Unknown paths, including <code>/config.json</code> and <code>/data</code>, return 404 after authentication. Non-GET requests to known routes return 405. Uploads and card writes are not supported.</p>
+  </section>
+  <section>
+    <h2>Storage is a validation target, not a promise yet</h2>
+    <p>The concept targets a 32 GB card, around 2 GB reserved for apps, and 20 GB advertised shared-file capacity. This firmware reports actual filesystem capacity and usage; it does not reserve space or enforce a shared-file quota. GiB displayed in the browser uses 1024-based units and differs from marketed GB.</p>
+    <p>A 1 TB card is not a verified capability. Large cards commonly arrive as exFAT; this build expects FAT32 and does not enable exFAT. Card capacity does not remove ESP32 RAM, transfer, filesystem, or concurrency limits. Test the exact card and filesystem before offering expansions. FAT32 also limits an individual file to less than 4 GiB.</p>
+    <p>Before any card copy or manual backup, power down the CYD. Copying the whole card includes credentials; protect that copy. Backup restoration and interrupted-write recovery still need testing before business data is introduced.</p>
+  </section>
+  <section>
+    <h2>Validation and next milestone</h2>
+    <p>With Node.js 22+, run <code>npm test</code> and <code>npm run check</code> inside TraxxiServer; no npm packages are required. Browser tests execute the real status script against success/failure responses. Native tests execute the production configuration parser with ArduinoJson headers, MSVC C++ tools, and Windows; they explicitly skip if those tools are absent. An ESP32 compile is a separate required check.</p>
+    <p><strong>Initial verification:</strong> all four automated tests passed without skips, JavaScript syntax checking passed, and the separate sketch compiled with ESP32 core 3.3.12 on November 10, 2026. The default 4 MB build used 1,077,230 bytes (82%) of the application partition and 50,884 bytes (15%) of static RAM. This leaves limited flash headroom for future TLS/features; runtime heap and performance still require measurement. No device was flashed and no hardware/network acceptance tests were performed.</p>
+    <p>Hardware acceptance checklist (not implied by a successful compile):</p>
+    <ol>
+      <li>Boot the dedicated 32 GB card and verify TFT/Serial name, IP, and network without passwords.</li>
+      <li>Verify no/wrong credentials return 401 and correct credentials open the home page/status API.</li>
+      <li>Verify formatted capacity matches the card and no status payload includes credentials.</li>
+      <li>Test invalid config, missing assets, missing SD, and unreachable router; verify visible errors and no unauthenticated server.</li>
+      <li>Check IP, mDNS, and Windows name access; test a router disconnect/reconnect and discovery failure fallback.</li>
+      <li>Check unknown paths and non-GET methods, then test sustained operation and refreshes from target phones/computers.</li>
+    </ol>
+    <p>Next: define the shared data/API and employee/administrator/owner permissions, verify encrypted access on hardware, then implement Employee Roster, vacations/holidays, and the admin-upload/employee-read Document Share workflow. Define versioned app manifests before building an installer. Keep FTP out of the first release.</p>
+  </section>
+</main>
+</body>
+</html>

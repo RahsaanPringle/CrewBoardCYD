@@ -1,0 +1,12 @@
+{
+  "serverName": "Traxxis Business Server",
+  "hostname": "traxxi-server",
+  "wifi": {
+    "ssid": "YOUR_WIFI_NAME",
+    "password": "YOUR_WIFI_PASSWORD"
+  },
+  "admin": {
+    "username": "owner",
+    "password": "REPLACE_WITH_A_UNIQUE_PASSWORD"
+  }
+}

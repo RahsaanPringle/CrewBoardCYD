@@ -40,6 +40,14 @@ Install these libraries:
 
 `WiFi`, `SD`, and the filesystem classes come with the ESP32 board package.
 
+The hostname feature uses the bundled `ESPmDNS` and `NetBIOS` libraries. The verified build target is Espressif `esp32` **3.3.12**, board **ESP32 Dev Module** (`esp32:esp32:esp32`); no separate name-resolution library is required on this core. Other core versions require checking these APIs before building.
+
+On Windows, this core does not expose the `460800` upload option; use the supported slower **115200** option. The firmware can be compiled without uploading:
+
+```powershell
+arduino-cli compile --fqbn "esp32:esp32:esp32:CPUFreq=240,FlashFreq=80,FlashMode=qio,FlashSize=4M,PartitionScheme=default,UploadSpeed=115200" .\CrewBoard_CYD
+```
+
 Configure `TFT_eSPI` for the physical CYD. A common ESP32-2432S028R display configuration uses ILI9341 with TFT MISO 12, MOSI 13, SCLK 14, CS 15, DC 2, and RST -1. Do not assume those values apply to every revision.
 
 Open [CrewBoard_CYD.ino](CrewBoard_CYD.ino) as the Arduino sketch and compile/upload it.
@@ -89,6 +97,23 @@ The included JSON records are sample data. Replace them through the owner interf
 3. On a device connected to the same network, open `http://IP-ADDRESS/`.
 4. Enter the administrator or staff credentials from `config.json` when the browser asks.
 5. The administrator (owner) can edit all CrewBoard records. Staff accounts can read everything, post to the message board, and update their own contact details.
+
+### Memorable local network name
+
+The optional top-level `"hostname": "crewboard-cyd"` setting in `/config.json` selects the device name. Use **1–15 ASCII letters, digits, or hyphens**, with a letter or digit at both ends. Do not include `.local`, a URL, spaces, or underscores. Valid names are normalized to lowercase. Missing, empty, null, wrong-type, or invalid values use **`crewboard-cyd`**; supplied invalid values are reported through the Serial/status log without preventing startup. Existing configurations without this setting remain compatible.
+
+Hostname changes take effect **after a restart**. Saving staff logins reloads account configuration but does not change the active hostname or restart name services.
+
+On the configured Wi-Fi network:
+
+- Open **`http://crewboard-cyd.local/`** (substitute your hostname) on a same-network client with mDNS support. The CYD also advertises its HTTP/TCP service on port 80.
+- The CYD supplies its hostname to DHCP before joining Wi-Fi and answers NetBIOS name queries from compatible Windows clients. A plain address such as **`http://crewboard-cyd/`** depends on the router's DNS integration or the client's enabled name-resolution mechanisms; setting a hostname alone does **not** guarantee it.
+- The status display shows **Host**, **IP**, and **Network**. Successful name-service startup and any failures appear in the existing Serial/status log. A failed mDNS or NetBIOS startup does not stop HTTP: use **`http://IP-ADDRESS/`** instead.
+- Keep a **DHCP reservation** for the CYD in the router as a stable numeric fallback. Choose a different hostname for each CYD on the same network to avoid collisions.
+
+Client support and network policy vary. Multicast/broadcast filtering, guest networks, Wi-Fi client isolation, VLAN boundaries, VPN routing, or disabled NetBIOS can prevent name resolution. IP access still depends on routing/firewall policy. This feature does not run a DNS server, change router settings, provide remote access, or add HTTPS. Authentication, APIs, and WebDAV permissions remain unchanged. Browser credentials and preferences may be separate for IP, `.local`, and plain-name origins.
+
+In **setup access-point mode**, mDNS and NetBIOS are not started. The Host line identifies the configured device name, not an available name-based address in that mode. Connect to the existing setup SSID and use the displayed AP IP, normally **`http://192.168.4.1/`**, then update the SD-card configuration and restart as before.
 
 The roster requires only a display name. Business role, phone, email, birthday, emergency contact, notes, username, and password can be added later. Staff passwords are never stored in `roster.json` or returned to the browser; the administrator form updates the protected `users` section of `/config.json`. New credentials take effect immediately without restarting the CYD.
 

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TraxxiServer | Firmware foundation</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Local business intranet / development unit</p>
+      <h1 id="server-name">TraxxiServer</h1>
+      <p>A separate CYD server foundation for the Traxxis business-server concept.</p>
+    </header>
+    <section aria-labelledby="status-heading">
+      <h2 id="status-heading">Device status</h2>
+      <p id="status" role="status">Reading device status...</p>
+      <dl id="device-details" hidden>
+        <dt>Hostname</dt><dd id="hostname"></dd>
+        <dt>IP address</dt><dd id="ip-address"></dd>
+        <dt>Discovery</dt><dd id="discovery"></dd>
+        <dt>Firmware / API</dt><dd id="version"></dd>
+        <dt>Formatted card capacity</dt><dd id="storage"></dd>
+      </dl>
+      <button id="refresh" type="button">Refresh status</button>
+      <noscript><p>JavaScript is needed for live status. Device status is also shown on the CYD screen.</p></noscript>
+    </section>
+    <section aria-labelledby="apps-heading">
+      <h2 id="apps-heading">The four starter apps</h2>
+      <p>These are the intended next steps, not installed apps. This firmware does not yet store business records.</p>
+      <div class="apps">
+        <article><span>Foundation only</span><h3>HomePage</h3><p>The device status page is running. Notices and upcoming dates are planned.</p></article>
+        <article><span>Planned</span><h3>Employee Roster</h3><p>Employee contacts and individual employee, administrator, and owner roles.</p></article>
+        <article><span>Planned</span><h3>Schedule</h3><p>Vacations and holidays first, with work scheduling later.</p></article>
+        <article><span>Planned</span><h3>Document Share</h3><p>Owner/admin uploads of blank forms and references; employee viewing, downloading, and printing.</p></article>
+      </div>
+    </section>
+    <aside><strong>Bench prototype, not a production system.</strong> HTTP does not encrypt your login or traffic. Use a unique test password on a trusted, isolated local network. Do not upload sensitive paperwork or expose this device to the internet. FTP, WebDAV, browser uploads, and HTTPS are not implemented.</aside>
+  </main>
+</body>
+</html>

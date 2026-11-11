@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bonfire notes on adapting CYDServer into a small-business intranet server.">
+  <title>CYDServer: Small Business Server Brainstorm</title>
+  <style>
+    :root { color-scheme: light; --ink:#1c2932; --muted:#52636d; --paper:#f4f1e8; --card:#fffdf7; --accent:#176b58; --accent2:#d7833f; --line:#d9d5c9; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { width:min(940px, calc(100% - 32px)); margin:40px auto 64px; }
+    header { padding:38px clamp(22px,6vw,58px); border-radius:18px; color:#fff; background:linear-gradient(135deg,#173f39,#176b58 68%,#65936a); box-shadow:0 12px 32px #173f3926; }
+    header p { max-width:680px; color:#e5f0e8; margin:12px 0 0; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:.76rem; font-weight:750; color:#c8dfc9; }
+    h1 { font-size:clamp(2rem,5vw,3.25rem); line-height:1.08; margin:.4rem 0; }
+    h2 { margin:0 0 12px; font-size:1.45rem; line-height:1.25; }
+    h3 { margin:18px 0 5px; font-size:1.08rem; }
+    section { margin-top:20px; padding:clamp(20px,4vw,34px); background:var(--card); border:1px solid var(--line); border-radius:15px; }
+    p { margin:8px 0 12px; }
+    ul, ol { padding-left:1.35rem; margin:8px 0 12px; }
+    li { margin:5px 0; }
+    .callout { border-left:5px solid var(--accent2); background:#fff5e8; padding:14px 17px; border-radius:8px; margin:16px 0 0; }
+    .answer { border-left:5px solid var(--accent); background:#edf6ef; padding:14px 17px; border-radius:8px; margin:16px 0 0; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+    .tile { padding:16px; border:1px solid var(--line); background:#fff; border-radius:11px; }
+    .tile h3 { margin:0 0 6px; }
+    .tag { display:inline-block; padding:2px 9px; border-radius:999px; background:#e7eee5; color:#245548; font-size:.78rem; font-weight:700; }
+    table { width:100%; border-collapse:collapse; margin:12px 0; }
+    th,td { text-align:left; vertical-align:top; padding:10px 12px; border-bottom:1px solid var(--line); }
+    th { background:#f1efe7; }
+    a { color:#145d4e; text-decoration-thickness:1px; text-underline-offset:3px; }
+    code { background:#f0eee7; border-radius:4px; padding:1px 5px; }
+    pre { overflow:auto; padding:16px; border-radius:10px; background:#1c2932; color:#eff5ed; font-size:.9rem; }
+    footer { color:var(--muted); padding:22px 6px; font-size:.9rem; }
+    @media (max-width:600px) { main { width:min(100% - 20px, 940px); margin-top:10px; } header { border-radius:12px; } table { font-size:.92rem; } th,td { padding:8px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Bonfire notes · early concept</div>
+    <h1>A small-business server on a CYD?</h1>
+    <p>CrewBoard already points toward a useful local server. Could the same kind of low-cost box host a simple intranet for a small team—more like a trimmed-down SharePoint than a full office platform?</p>
+  </header>
+
+  <section>
+    <h2>The shape of the idea</h2>
+    <p>Think of the CYD as a quiet little server on the business Wi-Fi. A phone, tablet, or office computer opens one home page and finds a few practical tools: shared files, notices, schedules, procedures, and links. The CYD display can show its name and network status; the browser does the real work.</p>
+    <p>The goal would be dependable basics for a small crew, without asking the owner to learn server administration. Keep it local-first, make setup understandable, and let a person copy the SD card to make a backup. The product idea is a <strong>private business server</strong>: it sits on the business's existing router, is intended for people on that network, and uses individual logins.</p>
+    <div class="callout"><strong>Scope note:</strong> This page is a concept sketch only. It does not change CrewBoard or propose a firmware implementation yet.</div>
+  </section>
+
+  <section>
+    <h2>Storage: start with 32 GB, offer room to grow</h2>
+    <p>For a first product, assume a 32 GB microSD card. Set aside about 2 GB for the server software and bundled apps, and advertise the device as a <strong>20 GB server</strong> for shared business files. The remaining space is a cushion for filesystem overhead, updates, and reliable operation; the advertised capacity is a simple promise, not a claim that every byte on the card is customer storage.</p>
+    <p>This gives a small business ample room for printable forms, policies, and everyday documents without making a terabyte card a requirement. If a business later needs more, larger storage can be offered as an expansion after the card, filesystem, and backup workflow are tested together.</p>
+    <div class="answer"><strong>Starting assumption:</strong> 32 GB card · around 2 GB reserved for apps · 20 GB advertised file space. Test actual formatted capacity and leave operating headroom before fixing the product numbers.</div>
+    <p>The current CrewBoard setup expects FAT32. Espressif documents FAT12/16/32 as the usual FAT support and says optional exFAT support is not enabled by default; its FAQ notes that cards over 32 GB commonly use exFAT. See <a href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/storage/fatfs.html">Espressif FAT filesystem support</a> and the <a href="https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/storage/fatfs.html">Espressif FAT FAQ</a>.</p>
+  </section>
+
+  <section>
+    <h2>Getting files onto it</h2>
+    <table>
+      <thead><tr><th>Approach</th><th>What it feels like</th><th>Tradeoff</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Browser drag-and-drop</strong></td><td>Drop files onto a page in the intranet. It can show progress, a destination folder, and a clear success/failure message.</td><td>Friendly for occasional uploads. The page still needs upload limits, safe filenames, permission checks, and memory-conscious handling.</td></tr>
+        <tr><td><strong>WebDAV</strong></td><td>Connect from a desktop file manager or a WebDAV-capable client; files appear much like a shared folder.</td><td>CrewBoard already has a small WebDAV share for its shared folder, with admin-only writes and an 8 MB upload limit. It is a useful starting point, not yet a general document library.</td></tr>
+        <tr><td><strong>FTP</strong></td><td>Traditional file-transfer client and server workflow.</td><td>Plain FTP does not encrypt credentials or file contents. FTPS/SFTP add complexity and are a poor first fit for this small, local device.</td></tr>
+      </tbody>
+    </table>
+    <p>For the initial Document Share app, keep the workflow simple: an owner or administrator uploads shared forms and reference documents; employees can find, download, and print them. Do not make employee-submitted files or personal folders part of the starting offer. The WebDAV capability in CrewBoard is a useful technical starting point, but its current 8 MB limit and admin-only writes would need to match the product decision.</p>
+  </section>
+
+  <section>
+    <h2>Opening and downloading documents</h2>
+    <p>Each item in Document Share should respond naturally when clicked, with a separate download option available where useful.</p>
+    <table>
+      <thead><tr><th>File type</th><th>Click behavior</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>HTML pages</td><td>Open a browser preview inside the server interface.</td><td>Use a restricted preview that blocks scripts and other active behavior. If a page needs interactive features, offer it as a download instead.</td></tr>
+        <tr><td>PDF</td><td>Preview in the browser when that browser supports PDF viewing; keep a Download button available.</td><td>Some clients may download instead, depending on browser support or user settings.</td></tr>
+        <tr><td>Word and Excel files</td><td>Download the file, then let the device open it in a compatible installed app if the user chooses.</td><td>The server cannot guarantee that Word, Excel, or another compatible application is installed or automatically launched.</td></tr>
+        <tr><td>Other or unknown files</td><td>Download rather than attempt an in-browser preview.</td><td>Use the real file type and a safe filename; do not trust the extension alone.</td></tr>
+      </tbody>
+    </table>
+    <p>The server can send a correct media type and choose whether a file is presented inline or as a download. The browser and device still decide what they can display and which desktop or mobile app, if any, can open a downloaded file.</p>
+  </section>
+
+  <section>
+    <h2>Network name and configuration</h2>
+    <p>Yes. The current CrewBoard setup already keeps the Wi-Fi network name and password in <code>/config.json</code>. It also supports an optional device hostname there, so a person can choose a memorable server name such as <code>crewboard-cyd</code>. On compatible clients, that can resolve as <code>http://crewboard-cyd.local/</code>; a DHCP reservation remains a useful fallback.</p>
+    <p>For a general server, the config could eventually include the business-server name, Wi-Fi details, and an initial administrator account. Keep passwords out of the on-screen status display, and make manual backup instructions explicit because copying the config also copies credentials.</p>
+  </section>
+
+  <section>
+    <h2>The starter apps</h2>
+    <p>Think of these as a small collection of apps, each doing one useful job. The first offer should be easy to explain to a landscaping crew or a family-run shop—not a smaller copy of all of SharePoint.</p>
+    <div class="grid">
+      <article class="tile"><span class="tag">App 1</span><h3>HomePage</h3><p>The front door: links to the other apps, important notices, and a quick view of upcoming dates.</p></article>
+      <article class="tile"><span class="tag">App 2</span><h3>Employee Roster</h3><p>Who works here and how to contact them. Includes individual employee logins plus administrator and owner accounts, with roles that control what each person can see or change.</p></article>
+      <article class="tile"><span class="tag">App 3</span><h3>Schedule</h3><p>Track vacations and holidays first, then grow into the work schedule when the business is ready.</p></article>
+      <article class="tile"><span class="tag">App 4</span><h3>Document Share</h3><p>A shared shelf for printable employee forms and business documents. For a paper-first shop, staff can print a direct-deposit form, fill it out on paper, and hand it in without putting personal information into the server.</p></article>
+    </div>
+    <div class="answer"><strong>Why this could fit:</strong> a family landscaping business or battery shop may not want a SharePoint system or online employee forms. A private place to check who is taking time off next week and print the right paper form can be useful on its own—and a gentle first step toward better organized business information later.</div>
+  </section>
+
+  <section>
+    <h2>Possible future: installable apps and shared data</h2>
+    <p>Instead of building every feature into one large website, the server could host separate app pages such as <code>/roster</code>, <code>/customers</code>, and <code>/schedule</code>. Each app would have its own screens and release, while using common sign-in and shared server services.</p>
+    <p>The app pages should use the server's API to access common data under <code>/data</code>. The browser cannot write files directly to the SD card; the server remains responsible for permissions, validation, and safe file updates. This also gives the server one place to keep shared records consistent when several apps use them.</p>
+    <h3>What an installable app package might include</h3>
+    <ul>
+      <li>The app's web pages, styles, and browser-side code.</li>
+      <li>A manifest with a stable app ID, app version, supported server/API version range, required permissions, dependencies, and data-schema version.</li>
+      <li>Data definitions or starter files that the server can create when the app is installed.</li>
+    </ul>
+    <h3>Version dependencies deliberately</h3>
+    <p>Use Semantic Versioning for app packages and the shared API: <code>MAJOR.MINOR.PATCH</code>. A major version signals an incompatible contract change; a minor version adds backward-compatible capability; a patch version fixes bugs without changing the contract. This only works if releases follow the rules consistently. See the <a href="https://semver.org/">Semantic Versioning specification</a>.</p>
+    <p>Apps should declare a compatible <em>range</em> for each prerequisite instead of requiring one exact version forever. For example, Customers might accept Locations versions from 1.2.0 up to, but not including, 2.0.0. After installation, record the exact versions actually installed so the server can reproduce and diagnose that setup.</p>
+    <pre><code>{
+  "id": "customers",
+  "version": "1.1.0",
+  "requires": {
+    "serverApi": ">=1.0.0 &lt;2.0.0",
+    "apps.locations": ">=1.2.0 &lt;2.0.0"
+  }
+}</code></pre>
+    <div class="answer"><strong>Example dependency:</strong> if <code>/customers</code> uses location records, the Customers package declares a compatible Locations prerequisite. The installer checks what is already installed and includes or offers a compatible prerequisite when it is missing.</div>
+    <h3>Recommended installer rules</h3>
+    <ul>
+      <li>Keep the server API version separate from each app's version. Depend on stable API capabilities and data contracts, not private implementation details.</li>
+      <li>Keep dependencies one-way; reject circular dependencies. Check the entire dependency tree and all version constraints before changing the card.</li>
+      <li>Do not silently upgrade or replace a working prerequisite. Show the proposed changes and let the owner accept them.</li>
+      <li>Install only trusted packages and verify a vendor signature or trusted checksum. Do not let an app package execute arbitrary server-side code.</li>
+      <li>Create missing data files without overwriting existing business data. Record each data schema version separately from the app version.</li>
+      <li>Back up before a schema migration, apply a known migration path, and stop safely if it fails. Preserve business data when an app is removed unless the owner explicitly deletes it.</li>
+      <li>Store the installed app IDs, exact versions, dependency resolution, and package checksums in an installation record on the card.</li>
+    </ul>
+    <p>This modular approach could support a basic server plus optional apps sold separately or in bundles. It is a future product idea, not part of the initial sales offer. A sensible first step would be to define the shared API and a small manifest format before building an app installer.</p>
+  </section>
+
+  <section>
+    <h2>Design principles worth keeping</h2>
+    <ul>
+      <li><strong>Local first:</strong> the main tools work on the business network without cloud services.</li>
+      <li><strong>Simple permissions:</strong> explain who can view, upload, edit, and delete in plain language. Start with shared files; avoid personal folders.</li>
+      <li><strong>Small and predictable:</strong> show upload limits, storage remaining if practical, and what happens when the card fills up.</li>
+      <li><strong>Recoverable:</strong> power down, remove the card, and copy it to another device; document restore steps.</li>
+      <li><strong>One job at a time:</strong> this is for a handful of users and ordinary office files, not simultaneous heavy uploads or a large company.</li>
+      <li><strong>Private by network scope:</strong> the device is intended to be reached from the business network, not from the public internet, and accounts require passwords. Use “private” to describe local network access. Password protection helps control who can sign in, while HTTPS/TLS would encrypt traffic between a browser and the server.</li>
+    </ul>
+    <h3>Can we add encryption?</h3>
+    <p>Yes, encryption can be part of the design. The most direct protection would be HTTPS/TLS, which encrypts browser traffic such as passwords and uploaded files while it travels over Wi-Fi. Espressif provides an HTTPS server component, but adding it to this Arduino-style server would take integration and memory testing. A locally generated certificate may also trigger a browser warning until each device trusts it. See <a href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_https_server.html">Espressif HTTPS server documentation</a>.</p>
+    <p>Encryption of the SD card itself is a separate choice. It could make the current “remove the card and copy it on a computer” backup approach harder, because a restore would need the right key and compatible software. For a starter product, password-protected accounts and a trusted, private business Wi-Fi are the simple baseline; HTTPS/TLS is a worthwhile security upgrade to investigate before making stronger claims.</p>
+  </section>
+
+  <section>
+    <h2>Decisions for now</h2>
+    <ul>
+      <li><strong>Storage:</strong> 32 GB card, about 2 GB reserved for apps, marketed as a 20 GB server.</li>
+      <li><strong>Network:</strong> connect to the customer's existing router.</li>
+      <li><strong>Files:</strong> shared documents, uploaded by the owner/admin and available for employees to download or print.</li>
+      <li><strong>Privacy:</strong> local-network access with account passwords; investigate HTTPS/TLS as an encryption layer.</li>
+    </ul>
+    <p>The examples that make the idea concrete are a small landscaping company and a family-run battery shop: both may be comfortable with paper, while still benefiting from knowing who is taking time off next week or having the right form ready to print.</p>
+  </section>
+
+  <footer>Working concept for discussion. Based on the supplied CrewBoard README and sketch, plus Espressif filesystem and HTTPS documentation. No implementation changes are included.</footer>
+</main>
+</body>
+</html>

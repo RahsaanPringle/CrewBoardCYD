@@ -3,6 +3,7 @@
     "ssid": "YOUR_WIFI_NAME",
     "password": "YOUR_WIFI_PASSWORD"
   },
+  "hostname": "crewboard-cyd",
   "setupAccessPoint": {
     "ssid": "CrewBoard-Setup",
     "password": "CHANGE_THIS_SETUP_PASSWORD"

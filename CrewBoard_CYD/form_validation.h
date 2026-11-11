@@ -10,6 +10,16 @@ inline bool alphaNumeric(char value) {
   return digit(value) || (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z');
 }
 
+inline bool hostname(const char* value) {
+  if (!value) return false;
+  const size_t length = strlen(value);
+  if (!length || length > 15 || !alphaNumeric(value[0]) || !alphaNumeric(value[length - 1])) return false;
+  for (size_t i = 1; i + 1 < length; ++i) {
+    if (!alphaNumeric(value[i]) && value[i] != '-') return false;
+  }
+  return true;
+}
+
 inline bool date(const char* value, bool yearOptional = false) {
   if (!value) return false;
   const size_t length = strlen(value);

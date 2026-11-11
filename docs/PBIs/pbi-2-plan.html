@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Implementation and validation plan for CrewBoard PBI-2: memorable local network names.">
+  <title>PBI-2 Implementation Plan | CrewBoard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #526078;
+      --line: #d7dfeb;
+      --paper: #fff;
+      --canvas: #f3f6fb;
+      --accent: #1359a5;
+      --accent-soft: #e8f1fc;
+      --good: #17613a;
+      --good-soft: #e8f6ee;
+      --warn: #7a4c06;
+      --warn-soft: #fff3d8;
+      --code: #101827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid #e29b18;
+      outline-offset: 3px;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 32px auto 64px;
+    }
+
+    header,
+    main>section,
+    footer {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: 0 4px 18px rgb(23 32 51 / 5%);
+    }
+
+    header {
+      padding: clamp(24px, 5vw, 52px);
+    }
+
+    main {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    main>section {
+      padding: clamp(20px, 4vw, 36px);
+    }
+
+    footer {
+      margin-top: 18px;
+      padding: 18px 24px;
+      color: var(--muted);
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+    }
+
+    h1 {
+      max-width: 800px;
+      margin: 10px 0 14px;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: clamp(1.45rem, 3vw, 2rem);
+    }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 1.15rem;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    li+li {
+      margin-top: 6px;
+    }
+
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    code {
+      overflow-wrap: anywhere;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--accent);
+      font-size: .82rem;
+      font-weight: 750;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-width: 790px;
+      color: var(--muted);
+      font-size: 1.12rem;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 11px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .callout {
+      margin: 18px 0;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 12px 16px;
+      background: var(--accent-soft);
+    }
+
+    .callout.warning {
+      border-color: #d28a08;
+      background: var(--warn-soft);
+      color: #4a350e;
+    }
+
+    .callout.success {
+      border-color: #23804d;
+      background: var(--good-soft);
+      color: #153f29;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .phase {
+      border-left: 3px solid var(--accent);
+      padding: 2px 0 4px 18px;
+    }
+
+    .phase+.phase {
+      margin-top: 20px;
+    }
+
+    .phase h3 {
+      margin-top: 0;
+    }
+
+    .phase-label {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f5f8fc;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 12px 0;
+      border-radius: 9px;
+      padding: 16px;
+      background: var(--code);
+      color: #edf3ff;
+      font-size: .9rem;
+      line-height: 1.55;
+      tab-size: 2;
+    }
+
+    .mermaid {
+      overflow-x: auto;
+      padding: 10px 0;
+      text-align: center;
+    }
+
+    .diagram-fallback {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    details {
+      margin-top: 12px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .checklist {
+      padding-left: 1.4rem;
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(100% - 18px, 1120px);
+        margin-top: 9px;
+      }
+
+      th,
+      td {
+        min-width: 150px;
+      }
+
+      th:first-child,
+      td:first-child {
+        min-width: 105px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        margin: 0;
+      }
+
+      header,
+      main>section,
+      footer {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+
+      .mermaid {
+        display: none;
+      }
+
+      .diagram-fallback {
+        display: block;
+      }
+
+      a {
+        color: inherit;
+      }
+    }
+  </style>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: "neutral" });
+  </script>
+</head>
+
+<body>
+  <div class="page">
+    <header>
+      <p class="eyebrow">CrewBoard · Planning guide</p>
+      <h1>Reach CrewBoard by a memorable local network name</h1>
+      <p class="lede">A practical implementation path for PBI-2: decide how the name is configured, announce it safely
+        on the local network, preserve the IP-address fallback, and prove the behavior on real clients.</p>
+      <div class="meta" aria-label="Document details">
+        <span class="pill">Source: <a href="./pbi-2.md">PBI-2</a></span>
+        <span class="pill">Status: Implemented; hardware acceptance pending</span>
+        <span class="pill">Scope: ESP32 CYD firmware + setup documentation</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="implementation-status">
+        <h2>Implementation checkpoint</h2>
+        <p>The firmware now validates an optional hostname, defaults to <code>crewboard-cyd</code>, sets it before
+          enabling station mode, and starts the bundled mDNS/NetBIOS services after HTTP startup on a connected station
+          with an IP. Name-service failures are logged and do not prevent HTTP startup. Setup AP mode stays IP-only. The
+          display has dedicated Host, IP, and Network lines and retains seven status lines.</p>
+        <p>Hostname changes take effect after reboot. Reloading configuration during a staff-login save does not change
+          the active hostname or restart discovery.</p>
+        <div class="callout success">
+          <strong>Verified in development:</strong> unchanged baseline and hostname-enabled firmware compile with ESP32
+          core 3.3.12; the full Node suite passes 65 tests without skips, including native C++ tests of the extracted
+          production configuration/network-startup logic. Separate native form/hostname validation assertions also pass.
+        </div>
+        <p>The native harness covers invalid/missing/empty/wrong-type names, the 15-character boundary, embedded NUL
+          rejection, lowercase normalization, reboot-only changes, call ordering, the 20-second timeout, AP fallback,
+          zero-IP guards, mDNS startup/service failures, and NetBIOS failure. It uses the installed ArduinoJson headers
+          and fake networking APIs: it does <strong>not</strong> prove real network resolution or HTTP behavior on the
+          physical device.</p>
+        <p><strong>Recorded explicit build:</strong> ESP32 Dev Module, CPU 240 MHz, flash 80 MHz/QIO/4 MB, default
+          SPIFFS partition scheme, and upload option 115200. Result: <strong>1,096,238 bytes of flash (83%)</strong> and
+          <strong>52,684 bytes of globals (16%)</strong>. Active TFT_eSPI setup: ILI9341_2, MISO 12, MOSI 13, SCLK 14,
+          CS 15, DC 2, RST -1. These local settings must still be checked against the actual board revision.</p>
+        <pre><code># From the repository root:
+node --test tools\hostname.test.mjs
+npm test
+npm run check</code></pre>
+        <p class="muted">The native network harness needs Windows MSVC C++ tools and ArduinoJson headers in the standard
+          Arduino user-library location. On machines without them, that test explicitly reports a skip; do not count a
+          skip as firmware verification.</p>
+        <div class="callout warning">
+          <strong>Still required on hardware:</strong> upload and verify IP access with legacy configuration, mDNS
+          resolution on a supported client, DHCP lease hostname, Windows NBNS behavior, station/AP display layout, and
+          existing authenticated HTTP/API/WebDAV behavior. No firmware was uploaded during development.
+        </div>
+        <p>See <a href="../../CrewBoard_CYD/README.md">the updated setup instructions</a> for the build target, Windows
+          upload-speed caveat, hostname rules, address forms, and setup-AP limitations. The remaining hardware/client
+          matrix below is the acceptance checklist, not a list of already verified results.</p>
+      </section>
+      <section id="outcome">
+        <h2>1. What “done” should feel like</h2>
+        <p>A crew member on the same supported local network can visit a memorable address such as
+          <code>http://crewboard-cyd.local/</code> instead of looking up an IP. The display still shows the IP, the
+          existing HTTP server remains available by IP, and failure to start name advertisement never prevents CrewBoard
+          from serving.</p>
+        <div class="grid">
+          <article class="card">
+            <h3>Reliable path</h3>
+            <p>The IP address remains the always-documented fallback. mDNS and NetBIOS are best-effort conveniences, not
+              dependencies for HTTP startup.</p>
+          </article>
+          <article class="card">
+            <h3>One configured identity</h3>
+            <p>DHCP hostname, mDNS name, NetBIOS name, and the status display all derive from one validated hostname.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Honest expectations</h3>
+            <p><code>.local</code> requires a client/network that supports mDNS. A plain name such as
+              <code>http://crewboard-cyd/</code> depends on router or client behavior and is not guaranteed.</p>
+          </article>
+        </div>
+        <div class="callout warning">
+          <strong>Not a DNS feature:</strong> the CYD will not run a DNS server, configure the router, or make local
+          names work across guest networks, VLANs, or isolated Wi-Fi clients.
+        </div>
+      </section>
+
+      <section id="baseline">
+        <h2>2. Where the feature fits today</h2>
+        <p>The current boot path is concentrated in <a
+            href="../../CrewBoard_CYD/CrewBoard_CYD.ino">CrewBoard_CYD.ino</a>: <code>loadConfiguration()</code> reads
+          the SD-card configuration, <code>connectToNetwork()</code> joins station Wi-Fi or starts the setup access
+          point, and <code>setup()</code> starts the HTTP server. The status display currently has a dedicated IP line
+          and a network-name line.</p>
+        <ol>
+          <li>Configuration is loaded from <code>/config.json</code> on the SD card. Existing Wi-Fi, AP, and account
+            settings are already checked at startup.</li>
+          <li>The firmware sets <code>WIFI_STA</code>, calls <code>WiFi.begin()</code>, and waits up to 20 seconds.</li>
+          <li>On success, it records <code>WiFi.localIP()</code>. On failure, it starts the setup AP and records
+            <code>WiFi.softAPIP()</code>.</li>
+          <li>The HTTP server starts after either network mode is ready. Both modes are currently reached using the
+            displayed IP address.</li>
+        </ol>
+        <p>Configuration examples are in <a href="../../CrewBoard_CYD/sd-card/config.sample.json">the SD-card
+            sample</a>. User-facing access and setup instructions live in <a href="../../CrewBoard_CYD/README.md">the
+            CYD README</a>. There is no firmware build/test command in the root <a href="../../package.json">package
+            scripts</a>; the documented Arduino IDE/ESP32 board configuration is the current build path.</p>
+        <div class="callout success">
+          <strong>Keep the change focused:</strong> this PBI changes firmware configuration, network startup, status
+          reporting, and setup docs. It does not need to change the browser app, API routes, authentication, or WebDAV.
+        </div>
+      </section>
+
+      <section id="decisions">
+        <h2>3. Resolve these design questions first</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Recommended starting decision</th>
+                <th>Why / verify</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>What is the default?</td>
+                <td><code>crewboard-cyd</code>, documented and used for absent, empty, or invalid values.</td>
+                <td>It is readable, unique enough for a small deployment, and within the 15-character limit. Warn
+                  through the existing log/display mechanism when falling back because a supplied value is invalid.</td>
+              </tr>
+              <tr>
+                <td>How should names be normalized?</td>
+                <td>Accept ASCII letters, digits, and internal hyphens; normalize once to lowercase after validation.
+                </td>
+                <td>Lowercase gives every advertisement and display a consistent form. Never silently remove invalid
+                  characters and accidentally turn one name into another.</td>
+              </tr>
+              <tr>
+                <td>Which interface gets name services?</td>
+                <td>Start mDNS and NetBIOS only after successful station Wi-Fi connection. Keep setup AP mode IP-only
+                  initially.</td>
+                <td>The PBI requires the AP address and instructions to continue working, not hostname resolution there.
+                  Explicitly document this boundary; revisit AP announcements only if there is a concrete use case.</td>
+              </tr>
+              <tr>
+                <td>Which NetBIOS implementation?</td>
+                <td>Use the NetBIOS library bundled with the inspected ESP32 Arduino core 3.3.12:
+                  <code>#include &lt;NetBIOS.h&gt;</code> and <code>NBNS.begin(name)</code>.</td>
+                <td>The installed header and source confirm the API. No additional library is needed on this version;
+                  compilation and Windows/network testing are still required.</td>
+              </tr>
+              <tr>
+                <td>Where is the sample config canonical?</td>
+                <td>Add the optional setting to <code>CrewBoard_CYD/sd-card/config.sample.json</code>; check whether
+                  another shipped sample is meant to mirror it.</td>
+                <td>Only the SD-card sample is directly called out in the firmware setup flow. Keep any maintained
+                  copies consistent if repository conventions require it.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="phases">
+        <h2>4. Work in small, verifiable phases</h2>
+        <div class="phase">
+          <p class="phase-label">Phase A · Confirm platform APIs</p>
+          <h3>Check the actual ESP32 toolchain before implementation</h3>
+          <ul>
+            <li>Record the ESP32 Arduino core version and compile target used for the README’s ESP32 Dev Module
+              configuration.</li>
+            <li>Confirm that <code>WiFi.setHostname()</code> is supported and determine the required call order relative
+              to <code>WiFi.mode()</code> and <code>WiFi.begin()</code>.</li>
+            <li>Confirm the bundled <code>ESPmDNS</code> API and how to advertise HTTP as <code>http/tcp</code> on port
+              80.</li>
+            <li>Find and verify the NetBIOS name service implementation for this core. Check name-length rules,
+              start/failure behavior, maintenance, and any dependency/license implications.</li>
+            <li>Choose how to make firmware compilation repeatable or record the exact manual IDE steps and
+              board-package version used for verification.</li>
+          </ul>
+          <p><strong>Exit check:</strong> all APIs have verified signatures and a known build environment; no
+            speculative library calls remain.</p>
+          <h3>What “platform APIs” means</h3>
+          <p>The <strong>platform</strong> is the Espressif ESP32 board package installed through Arduino Boards
+            Manager. It supplies the networking libraries alongside the compiler and board definitions. An
+            <strong>API</strong> is the function your sketch calls into those libraries. Phase A answers three
+            questions: does the function exist in our version, when can we call it, and how do we tell whether it
+            worked?</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mechanism</th>
+                  <th>Plain-English job</th>
+                  <th>What it does not do</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>DHCP hostname</td>
+                  <td>Tell the router “my name is crewboard-cyd” while joining Wi-Fi. A compatible router may publish
+                    that name in its DNS.</td>
+                  <td>Setting the name alone does not guarantee that a browser can resolve the bare name.</td>
+                </tr>
+                <tr>
+                  <td>mDNS</td>
+                  <td>Answer local multicast queries for <code>crewboard-cyd.local</code>. Advertise the HTTP service
+                    separately so discovery clients can find its port.</td>
+                  <td>It does not replace the HTTP server or work automatically across isolated networks.</td>
+                </tr>
+                <tr>
+                  <td>NetBIOS / NBNS</td>
+                  <td>Answer supported Windows-style short-name queries using UDP port 137.</td>
+                  <td>It is not a Windows file-sharing server, and modern client policy may disable this name-resolution
+                    mechanism.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Local inspection results — November 6, 2026</h3>
+          <p>These are development-machine findings, not proof of which firmware is flashed on the CYD. The Arduino IDE
+            board/core selection and a compile must still be confirmed.</p>
+          <ul>
+            <li><strong>Installed board package:</strong> <code>esp32:esp32</code> version <code>3.3.12</code>.
+              Documented board target: <code>esp32:esp32:esp32</code> (ESP32 Dev Module).</li>
+            <li><strong>Installed project libraries:</strong> ArduinoJson <code>7.4.3</code> and TFT_eSPI
+              <code>2.5.43</code>.</li>
+            <li><strong>DHCP API:</strong> <code>bool WiFi.setHostname(const char *hostname)</code> exists. In this core
+              it stores the default name; enabling station mode applies that stored name to the station interface. Set
+              it <em>before</em> <code>WiFi.mode(WIFI_STA)</code>, not merely before <code>WiFi.begin()</code>.</li>
+            <li><strong>mDNS APIs:</strong> <code>MDNS.begin(name)</code> and
+              <code>MDNS.addService("http", "tcp", 80)</code> both return <code>bool</code>. Check each result
+              separately. Supply the host label without <code>.local</code>; that suffix belongs in the browser URL.
+            </li>
+            <li><strong>NetBIOS API:</strong> the bundled <code>NetBIOS.h</code> exposes the global <code>NBNS</code>
+              object and <code>bool NBNS.begin(const char *name)</code>. It listens asynchronously, so its bundled
+              example does not call an update method in <code>loop()</code>.</li>
+            <li><strong>NetBIOS detail:</strong> the implementation uppercases the name internally and returns whether
+              it could listen on UDP 137. Keep a single lowercase application hostname and let the protocol handle its
+              own representation. Startup success is not proof that every Windows client can resolve it.</li>
+          </ul>
+          <div class="callout warning">
+            <strong>Important lifecycle detail:</strong> <code>loadConfiguration()</code> also runs after staff-account
+            changes. Do not accidentally reconfigure network naming or restart discovery whenever a login is saved.
+            Prefer an explicit “hostname changes take effect after restart” policy and keep the active network identity
+            consistent until that restart.
+          </div>
+          <h3>Read the integration sequence</h3>
+          <pre><code>#include &lt;WiFi.h&gt;
+#include &lt;ESPmDNS.h&gt;
+#include &lt;NetBIOS.h&gt;
+
+// Before enabling station mode:
+if (!WiFi.setHostname(hostname.c_str())) {
+  logEvent("Wi-Fi hostname setup failed");
+}
+if (!WiFi.mode(WIFI_STA)) {
+  logEvent("Station mode startup failed");
+  // Follow the existing network failure/AP fallback path.
+} else {
+  WiFi.begin(wifiSsid.c_str(), wifiPassword.c_str());
+}
+// After the existing connection wait confirms a station IP:
+if (!MDNS.begin(hostname.c_str())) {
+  logEvent("mDNS startup failed; use IP");
+} else if (!MDNS.addService("http", "tcp", serverPort)) {
+  logEvent("mDNS HTTP advertisement failed");
+}
+if (!NBNS.begin(hostname.c_str())) {
+  logEvent("NetBIOS startup failed; use IP");
+}
+// Neither discovery failure prevents the existing HTTP server starting.</code></pre>
+          <p class="muted">This is an integration sketch, not a complete replacement for
+            <code>connectToNetwork()</code>. Preserve its timeout and setup-AP fallback; do not paste this as a
+            standalone sketch.</p>
+          <h3>What you can check in Arduino IDE</h3>
+          <ol>
+            <li>Open <a href="../../CrewBoard_CYD/CrewBoard_CYD.ino">CrewBoard_CYD.ino</a>. In Boards Manager, confirm
+              that <strong>esp32 by Espressif Systems</strong> is version <code>3.3.12</code>.</li>
+            <li>Select <strong>ESP32 Dev Module</strong> and the settings in <a href="../../CrewBoard_CYD/README.md">the
+                CYD README</a>. Check the actual TFT_eSPI configuration for your display revision.</li>
+            <li>Click <strong>Verify</strong> to compile the unchanged sketch first. A successful baseline separates
+              pre-existing toolchain/display problems from new networking changes. Verify does not flash the device;
+              Upload does.</li>
+            <li>After implementation, compile again and inspect the reported library paths to ensure the bundled ESPmDNS
+              and NetBIOS versions were selected.</li>
+            <li>Upload only when ready for hardware testing. Monitor Serial at <strong>115200 baud</strong> for the
+              name-service success/failure messages and confirm access by IP before testing names.</li>
+          </ol>
+          <details>
+            <summary>Equivalent PowerShell commands (Arduino IDE includes the CLI)</summary>
+            <pre><code>$cli = 'C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe'
+&amp; $cli core list
+&amp; $cli lib list
+# Run from the repository root; compile only, no upload:
+&amp; $cli compile --fqbn esp32:esp32:esp32 '.\CrewBoard_CYD'</code></pre>
+            <p>The command uses the board's default options. For reproducible hardware verification, also record the
+              explicit options selected in the IDE and TFT_eSPI setup; a board name alone does not capture those
+              settings.</p>
+          </details>
+          <details>
+            <summary>Evidence and what remains unverified</summary>
+            <p>The installed core was inspected under
+              <code>%LOCALAPPDATA%\Arduino15\packages\esp32\hardware\esp32\3.3.12</code>. Relevant sources:
+              <code>libraries/WiFi/src/WiFiGeneric.cpp</code> (hostname setter and station-mode application),
+              <code>libraries/Network/src/NetworkManager.cpp</code> (default-name storage),
+              <code>libraries/ESPmDNS/src/ESPmDNS.h</code> (boolean APIs), and
+              <code>libraries/NetBIOS/src/NetBIOS.h</code>, <code>NetBIOS.cpp</code>, and its bundled example (NBNS
+              startup and asynchronous behavior).</p>
+            <p><strong>Completed:</strong> baseline and integrated firmware builds and native simulated service-failure
+              tests. <strong>Still open:</strong> physical display checks, name-resolution tests on real clients, and
+              real-device HTTP/API/WebDAV regression checks. Merely finding a header or passing a simulation is not the
+              definition of done.</p>
+          </details>
+        </div>
+
+        <div class="phase">
+          <p class="phase-label">Phase B · Configure and validate the name</p>
+          <h3>Make legacy configuration safe by default</h3>
+          <ul>
+            <li>Add an optional top-level <code>hostname</code> key to the SD-card sample, with a commented or
+              documented example value of <code>crewboard-cyd</code>.</li>
+            <li>Implement a small firmware validator: 1–15 ASCII characters; first and last characters alphanumeric;
+              interior characters alphanumeric or hyphen.</li>
+            <li>Use one default when the property is missing, empty, or invalid. Continue booting, and log the
+              invalid-supplied-value fallback rather than silently accepting a modified name.</li>
+            <li>Normalize the accepted/default value once, store it in a dedicated <code>String</code>, and use that
+              value everywhere. Do not make hostname validity a reason for otherwise valid configuration to fail.</li>
+            <li>Check edge cases: one-character name; 15-character name; leading/trailing hyphen; underscore; space;
+              non-ASCII; empty; missing; JSON value of the wrong type.</li>
+          </ul>
+          <pre><code>{
+  "wifi": {
+    "ssid": "YOUR_WIFI_NAME",
+    "password": "YOUR_WIFI_PASSWORD"
+  },
+  "hostname": "crewboard-cyd",
+  "setupAccessPoint": {
+    "ssid": "CrewBoard-Setup",
+    "password": "CHANGE_THIS_SETUP_PASSWORD"
+  }
+}</code></pre>
+          <p class="muted">Illustrative excerpt only. Preserve all existing configuration sections and never replace a
+            real populated <code>config.json</code> with a sample.</p>
+          <pre><code>bool validHostname(const char* value) {
+  if (!value) return false;
+  const size_t length = strlen(value);
+  if (length == 0 || length > 15) return false;
+
+  for (size_t i = 0; i &lt; length; ++i) {
+    const char c = value[i];
+    const bool alphanumeric =
+      (c &gt;= 'A' &amp;&amp; c &lt;= 'Z') ||
+      (c &gt;= 'a' &amp;&amp; c &lt;= 'z') ||
+      (c &gt;= '0' &amp;&amp; c &lt;= '9');
+    const bool internalHyphen = c == '-' &amp;&amp; i &gt; 0 &amp;&amp; i + 1 &lt; length;
+    if (!alphanumeric &amp;&amp; !internalHyphen) return false;
+  }
+  return true;
+}</code></pre>
+          <p class="muted">The validator can be a small helper in the firmware or a nearby header; keep it easy to test
+            and avoid allocating transformed strings during character checks.</p>
+        </div>
+
+        <div class="phase">
+          <p class="phase-label">Phase C · Add best-effort station announcements</p>
+          <h3>Keep IP access independent from name-service startup</h3>
+          <ul>
+            <li>Set the Wi-Fi station hostname before beginning the station connection, following the API ordering
+              verified in Phase A.</li>
+            <li>After station Wi-Fi is connected and has a local IP, start mDNS with the normalized host label and
+              advertise HTTP/TCP on port 80.</li>
+            <li>Start the verified NetBIOS name service on the station interface using the same normalized name.</li>
+            <li>Handle each start failure explicitly: log it via <code>logEvent()</code>, keep the HTTP server running,
+              and do not claim that name access is available when it is not.</li>
+            <li>Do not start station mDNS/NetBIOS after the firmware falls back to <code>WIFI_AP</code> unless AP
+              behavior is separately designed and tested. Keep <code>http://192.168.4.1/</code> (or the displayed AP
+              address) intact.</li>
+            <li>Confirm startup happens only once and that the server remains bound/available on the same interface as
+              before.</li>
+          </ul>
+          <pre><code>// Illustrative station-only flow; verify exact APIs against the selected core.
+if (!WiFi.setHostname(hostname.c_str())) {
+  logEvent("Wi-Fi hostname setup failed");
+}
+// Enable station mode only after storing the hostname.
+if (!WiFi.mode(WIFI_STA)) {
+  logEvent("Station mode startup failed");
+  // Follow the existing network failure/AP fallback path.
+} else {
+  WiFi.begin(wifiSsid.c_str(), wifiPassword.c_str());
+}
+
+// After WL_CONNECTED and a valid local IP:
+if (!MDNS.begin(hostname.c_str())) {
+  logEvent("mDNS startup failed; use IP address");
+} else if (!MDNS.addService("http", "tcp", serverPort)) {
+  logEvent("mDNS HTTP service failed; use IP address");
+}</code></pre>
+          <p class="muted">The installed core's verified NetBIOS start call is
+            <code>NBNS.begin(hostname.c_str())</code>; check its boolean result and log failure independently of mDNS.
+            Treat HTTP service-registration failure as a visible failure even if mDNS hostname startup itself succeeded.
+          </p>
+        </div>
+
+        <div class="phase">
+          <p class="phase-label">Phase D · Show both useful addresses</p>
+          <h3>Preserve the display’s existing status and log space</h3>
+          <ul>
+            <li>Display the normalized hostname as well as the current IP, including in AP fallback mode.</li>
+            <li>Keep the configured Wi-Fi SSID and existing startup/status log lines visible; adjust row spacing or
+              label lengths intentionally rather than overwriting status text.</li>
+            <li>Use accurate wording for AP mode: it is still the hostname selected for the device, but name-based
+              access may not be advertised there.</li>
+            <li>Inspect the physical 320×240 display at the configured rotation for clipping and overlap, including long
+              legal hostnames and IPv4 addresses.</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <p class="phase-label">Phase E · Document, build, and prove it</p>
+          <h3>Close the loop with real clients and a fallback path</h3>
+          <ul>
+            <li>Update the CYD README with the sample setting, validation/default behavior, <code>.local</code> URL,
+              plain-name caveat, DHCP-reservation recommendation, and client/network limitations.</li>
+            <li>Document AP mode as IP-first/IP-only for this release, if the recommended scope is kept.</li>
+            <li>Build the documented firmware target with the recorded ESP32 core version, and run existing Node
+              tests/checks to catch unrelated regressions.</li>
+            <li>Test on hardware: station DHCP hostname; mDNS HTTP service; IP URL; supported <code>.local</code>
+              client; a Windows client for NBNS; no-Wi-Fi setup AP fallback.</li>
+            <li>Record tested board/core versions and client/ router combinations. Do not generalize a passing
+              combination into a guarantee for every phone or router.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="flows">
+        <h2>5. Runtime sequence</h2>
+        <p>The ordering is important: the DHCP name must be set before station association, while service discovery
+          waits until the station has an address.</p>
+        <div class="mermaid">
+          flowchart TD
+          A[Boot and read SD config] --> B{Hostname valid?}
+          B -- yes --> C[Normalize and keep hostname]
+          B -- absent, empty, or invalid --> D[Use documented default; log invalid supplied value]
+          C --> E[Set station hostname before WiFi.begin]
+          D --> E
+          E --> F{Station joins within timeout?}
+          F -- yes --> G[Record station IP]
+          G --> H[Start mDNS and advertise HTTP TCP 80]
+          H --> I[Start verified NetBIOS name service]
+          I --> J[Start HTTP server; IP always works]
+          H -. failure: log and continue .-> J
+          I -. failure: log and continue .-> J
+          F -- no --> K[Start setup AP]
+          K --> L[Show AP IP; retain existing setup instructions]
+          L --> M[Start HTTP server by AP IP]
+        </div>
+        <details class="diagram-fallback">
+          <summary>Text alternative to the diagram</summary>
+          <p>Load and validate config, set the DHCP hostname, then try station Wi-Fi. After a station IP is available,
+            start mDNS and NBNS, then start HTTP regardless of advertisement success. If station Wi-Fi times out, start
+            the existing setup AP and serve by its IP.</p>
+        </details>
+      </section>
+
+      <section id="validation">
+        <h2>6. Acceptance-criteria coverage</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>PBI criterion</th>
+                <th>Implementation evidence</th>
+                <th>Verification</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Configurable hostname</td>
+                <td>Optional sample key; 15-character ASCII validator; consistent default; warning on supplied invalid
+                  input.</td>
+                <td>Exercise missing, empty, valid boundary, invalid boundary, and wrong JSON type. Old config still
+                  loads.</td>
+              </tr>
+              <tr>
+                <td>mDNS</td>
+                <td>Start after station connection; publish HTTP/TCP port 80; log failure without blocking server
+                  startup.</td>
+                <td>Browse to <code>http://&lt;hostname&gt;.local/</code> from a known mDNS-capable client on the same
+                  LAN; also browse by IP.</td>
+              </tr>
+              <tr>
+                <td>DHCP + NetBIOS</td>
+                <td>Set hostname before association; use the verified NBNS implementation with the same label.</td>
+                <td>Inspect router DHCP client list/lease for hostname; resolve the plain name on a compatible
+                  router/client; test Windows NBNS separately.</td>
+              </tr>
+              <tr>
+                <td>Status display</td>
+                <td>Show hostname and current IP without removing network or status lines.</td>
+                <td>Inspect STA and setup-AP screens with short and maximum-length names.</td>
+              </tr>
+              <tr>
+                <td>Compatibility</td>
+                <td>HTTP listener, auth, APIs, and WebDAV are unchanged; setup AP remains available by IP.</td>
+                <td>Smoke-test unauthenticated/authenticated behavior, representative API and WebDAV operations, station
+                  IP access, and AP IP access.</td>
+              </tr>
+              <tr>
+                <td>Documentation</td>
+                <td>README explains address forms, DHCP reservation, AP mode, limitations, and no-DNS guarantee.</td>
+                <td>Review every claim against the tested client/router matrix and the out-of-scope list.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="test-plan">
+        <h2>7. Test plan</h2>
+        <h3>Configuration and boot matrix</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Input / condition</th>
+                <th>Expected result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Legacy config with no <code>hostname</code></td>
+                <td>Boot with default name; join Wi-Fi; IP access works.</td>
+              </tr>
+              <tr>
+                <td>Empty or JSON null hostname</td>
+                <td>Boot with default name; no hostname configuration error.</td>
+              </tr>
+              <tr>
+                <td>Valid 1-character and 15-character names</td>
+                <td>Accept, normalize once, and use the same identity in every enabled service and display.</td>
+              </tr>
+              <tr>
+                <td>Leading/trailing hyphen, underscore, whitespace, non-ASCII, or over 15 characters</td>
+                <td>Use the default; report invalid supplied value; continue booting.</td>
+              </tr>
+              <tr>
+                <td>Wi-Fi unavailable after 20 seconds</td>
+                <td>Start existing setup AP; display its IP; HTTP remains reachable by that IP; no failed station
+                  advertisement blocks the AP.</td>
+              </tr>
+              <tr>
+                <td>mDNS or NBNS startup failure</td>
+                <td>Log the specific failure, continue to start HTTP, and retain IP access.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Client and network matrix</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Client / route</th>
+                <th>What to verify</th>
+                <th>Claim allowed in docs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Known mDNS-capable client, same ordinary LAN</td>
+                <td><code>http://crewboard-cyd.local/</code> opens the existing authenticated app.</td>
+                <td>mDNS works on tested supported clients/networks.</td>
+              </tr>
+              <tr>
+                <td>Windows client on same LAN</td>
+                <td>Verify the selected NBNS implementation resolves its name; also verify the IP URL.</td>
+                <td>Windows name resolution is available where NBNS/client policy/network permits.</td>
+              </tr>
+              <tr>
+                <td>Router/client with DHCP-name DNS integration</td>
+                <td>Try <code>http://crewboard-cyd/</code> and confirm which resolver answered.</td>
+                <td>Plain-name resolution may work on compatible router/client combinations.</td>
+              </tr>
+              <tr>
+                <td>Guest Wi-Fi, VLAN, multicast isolation, unsupported client</td>
+                <td>Expect discovery may fail; confirm IP fallback if local routing/firewall policy allows it.</td>
+                <td>No guarantee across isolated networks or unsupported mDNS clients.</td>
+              </tr>
+              <tr>
+                <td>CYD setup AP mode</td>
+                <td>Connect to the configured setup SSID and open the displayed AP IP, normally
+                  <code>http://192.168.4.1/</code>.</td>
+                <td>Use the displayed IP in setup mode for this release.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Suggested hands-on checklist</h3>
+        <ul class="checklist">
+          <li>Record board revision, ESP32 Arduino core version, hostname, router model, and client OS/version.</li>
+          <li>Use a DHCP reservation for a stable IP during testing; verify the reserved IP still opens CrewBoard.</li>
+          <li>Confirm DHCP lease name, <code>.local</code> resolution, and Windows NBNS independently. Do not treat one
+            as proof of the others.</li>
+          <li>Stop or isolate each name-service mechanism once to confirm its failure is visible and IP access still
+            works.</li>
+          <li>Use a temporarily incorrect Wi-Fi password to validate AP fallback; restore the known-good SD
+            configuration after the test.</li>
+          <li>Confirm the browser still prompts for the existing credentials and that a protected route behaves the same
+            by IP and hostname.</li>
+        </ul>
+      </section>
+
+      <section id="risks">
+        <h2>8. Risks and guardrails</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Unverified NBNS package</h3>
+            <p><strong>Risk:</strong> an assumed header/API does not build for the documented ESP32 core, or introduces
+              an unmaintained dependency.</p>
+            <p><strong>Guardrail:</strong> verify the actual core/package, version, API, memory use, and license before
+              choosing the integration.</p>
+          </article>
+          <article class="card">
+            <h3>Network name collisions</h3>
+            <p><strong>Risk:</strong> two devices advertise the same hostname on one LAN.</p>
+            <p><strong>Guardrail:</strong> document choosing a unique hostname per CYD; keep the DHCP reservation advice
+              and test collision behavior where feasible.</p>
+          </article>
+          <article class="card">
+            <h3>Display space</h3>
+            <p><strong>Risk:</strong> adding the hostname clips IP/network information or crowds startup logs.</p>
+            <p><strong>Guardrail:</strong> measure layout on the physical display in both network modes and for the
+              maximum accepted hostname.</p>
+          </article>
+          <article class="card">
+            <h3>Misleading plain-name promise</h3>
+            <p><strong>Risk:</strong> users expect every phone/router to resolve a bare hostname.</p>
+            <p><strong>Guardrail:</strong> call it router/client dependent; explain this is not a DNS server and keep
+              the IP as the fallback.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="definition">
+        <h2>9. Pull-request completion checklist</h2>
+        <ul class="checklist">
+          <li>Hostname validation and fallback behavior are implemented and covered by repeatable tests or an explicit
+            hardware checklist.</li>
+          <li>DHCP hostname is set at the verified point before station association.</li>
+          <li>mDNS publishes HTTP/TCP port 80 only after the station has an IP.</li>
+          <li>NetBIOS uses an implementation verified to build with the target ESP32 core.</li>
+          <li>Each service failure is visible and non-fatal; HTTP by IP remains available.</li>
+          <li>Setup-AP behavior is unchanged and its hostname-resolution scope is documented.</li>
+          <li>Display shows hostname, IP, network, and existing status without overlap.</li>
+          <li>README explains tested `.local` support, DHCP reservation, plain-name caveat, and network/client
+            limitations.</li>
+          <li>Firmware build result and tested hardware/client combinations are recorded in the PR.</li>
+          <li>Existing app behavior and security boundaries (HTTP authentication, API, WebDAV) are unchanged.</li>
+        </ul>
+        <details>
+          <summary>Suggested implementation order at a glance</summary>
+          <pre><code>1. Verify ESP32 core, ESPmDNS, and NBNS APIs
+2. Add optional config key + hostname validation/default
+3. Set DHCP station hostname before WiFi.begin()
+4. Start mDNS HTTP service + NBNS after station IP
+5. Keep advertisement failures non-fatal; preserve AP/IP fallback
+6. Update display layout and setup documentation
+7. Build, run existing checks, and verify on hardware/client matrix</code></pre>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>Planning note:</strong> the implementation checkpoint distinguishes development verification from
+        pending hardware acceptance. Keep <a href="./pbi-2.md">the PBI</a> as the source of acceptance criteria; do not
+        mark it complete until the remaining device/client checks pass.</p>
+    </footer>
+  </div>
+</body>
+
+</html>
